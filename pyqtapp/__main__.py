@@ -1,4 +1,8 @@
 import sys
+import asahmi
+import numpy as np
+import time
+
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from .ui_mainwindow import Ui_MainWindow
 
@@ -9,9 +13,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_A.clicked.connect(self.btnAfun)
         self.pushButton_B.clicked.connect(self.btnBfun)
         self.horizontalSlider.valueChanged['int'].connect(self.see)
-    def see(self,data):
-        print('value=%d' % data)
-        return data
+    def see(self,value):
+        hh = asahmi.HmiHandler('COM5', timeout = 1)
+        hh.start()
+        time.sleep(0.005)
+        data= np.array([value],dtype=np.uint8)
+        hh.putArray(data)
+        print('value=%d' % value)
+
 
 
     def btnAfun(self):
