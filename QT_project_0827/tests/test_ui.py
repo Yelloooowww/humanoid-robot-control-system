@@ -5,7 +5,8 @@ _ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(_ROOT_DIR)
 
 from PyQt5.QtWidgets import QMainWindow, QApplication
-from pyqtapp.ui_mainwindow import Ui_MainWindow
+# from pyqtapp.ui_mainwindow import Ui_MainWindow
+from pyqtapp.ui_mainwindow_before import Ui_MainWindow
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
