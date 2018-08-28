@@ -14,7 +14,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-
+from .listports import *
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -81,7 +81,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_16.valueChanged['int'].connect(self.now_angle_func)
 
     def setting(self):
-        items=("COM1","COM2","COM3","COM4","COM5","COM6","COM7","COM8","COM9","COM10","COM11","COM12","COM13","COM14","COM15","COM16","COM17","COM18","COM19","COM20","COM21","COM22","COM23","COM24","COM25")
+        items = listports()
         item,ok=QInputDialog.getItem(self,"選擇序列埠","Select Your COM",items,0,False)
         self.hh = asahmi.HmiHandler(str(item), timeout = 1)
         self.hh.start()
