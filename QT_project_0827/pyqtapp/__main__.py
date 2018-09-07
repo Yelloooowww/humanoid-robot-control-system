@@ -5,6 +5,8 @@ import time
 import serial
 
 
+
+
 from PyQt5.QtWidgets import QMainWindow, QApplication,QLabel,QWidget,QVBoxLayout
 # from .ui_mainwindow import Ui_MainWindow
 from .ui_mainwindow_before import Ui_MainWindow
