@@ -27,7 +27,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.now_angle_data=[]
         self.accumulate_angle_data=[]
         self.send_matrix=[]
-        self.delay=0.005
+        self.delay=0.05
         self.tmp=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.setupUi(self)
         self.vision_effect()
