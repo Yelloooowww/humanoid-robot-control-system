@@ -102,7 +102,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # self.hh.eventGetArray.wait()
             # print("Get Ack")
 
-
+            print('size=',len(self.accumulate_angle_data))
+            self.ser.write(bytes([len(self.accumulate_angle_data)]))
+            time.sleep(self.delay)
             for x in self.accumulate_angle_data:
                 self.ser.write(bytes([x]))
                 time.sleep(self.delay)
@@ -144,7 +146,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 if not line: break
                 self.send_matrix += [int(line)]
             f.close()
-            time.sleep(0.005)
+            time.sleep(self.delay)
+            print('size=',len(self.send_matrix))
+            self.ser.write(bytes([len(self.send_matrix)]))
+            time.sleep(self.delay)
             for x in self.send_matrix:
                 self.ser.write(bytes([x]))
                 time.sleep(self.delay)
