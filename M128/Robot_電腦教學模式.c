@@ -1,4 +1,4 @@
-#include "ASA_Lib.h" //測試程式 成功 (機器人)(接收單筆資料)
+#include "ASA_Lib.h" //測試程式 成功 (機器人_電腦教學模式)(資料尚未包成封包)
 #include "ASA_Lib_DAC00.h"
 #include <math.h>
 #include <string.h>
@@ -11,7 +11,7 @@
 
 volatile uint8_t i;
 volatile char get[100];
-int mode,k,data_1,position[100];
+int mode,k,data_1,position[100],side;
 unsigned char ID;
 
 
@@ -54,8 +54,16 @@ void USART1_Transmit( unsigned char data )
 /* Wait for empty transmit buffer */
 
 /* Put data into buffer, sends the data */
-PORTB|=(1<<PF1);    //PORTB|=(1<<PB4);
-PORTB&= ~(1<<PF2);  //PORTB&= ~(1<<PB3);
+PORTB|=(1<<PB4);    //收訊關閉
+PORTB|=(1<<PB2);    //收訊關閉
+PORTB|=(1<<PB1);    //送訊關閉
+PORTB|=(1<<PB3);    //送訊關閉
+
+if(side==1)
+{PORTB&= ~(1<<PB1);}  //左半邊送訊打開
+
+else if(side==2)
+{PORTB&= ~(1<<PB3);}  //右半邊送訊打開
 //printf("transmit:%d\n",data );
 
 while ( !( UCSR1A & (1<<UDRE1)) )  //If UDREn is one, the buffer is empty
@@ -78,13 +86,40 @@ UDR1 = data;
 
 void convert_1(int a)
 {
-	data_1=a*20+6000;   //電腦傳送:0~99，將其轉為: 6000~7980
+	// data_1=a*20+6000;   //電腦傳送:0~99，將其轉為: 6000~7980
+	// if(data_1>7980)     //若角度錯誤
+	// {data_1=7500;}      //設定角度為7500
+	data_1=a*100;         //電腦傳送:35~115，將其轉為: 3500~17500
 }
 
 void convert_2(int a,int b)
 {
 	position[k]=(a*128)+b;
 	position[k]=(position[k]-6000)/20;
+}
+
+void ID_convert(int a)     //將收到的ID(0~16) 轉換為 機器人上的ID且用side來區分左、右半邊
+{
+	if(a<3)
+	{ID=a;}
+	else if(a==3)
+	{ID=a+1;}
+	else if(a>3 && a<9)
+	{ID=a+2;}
+
+	else if(a==9 || a==10)
+	{ID=a-8;}
+	else if(a==11)
+	{ID=a-7;}
+	else if(a>11 && a<17)
+	{ID=a-6;}
+	else
+	{ID=0;}
+
+	if(a>0 && a<9)//若為左半邊
+	{side=1;}
+	else         //若為右半邊
+	{side=2;}
 }
 
 
@@ -94,8 +129,8 @@ int main(void)
   // printf("start1111\n");
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2)
-	DDRB=0xff;
-	DDRF=0xff;
+	DDRB=0xff;   //用PB1~4控制機器人左右半邊以及要送還是收
+	//DDRF=0xff;
 
 	i=0;
 	for(int j=0;j<100;j++)
@@ -106,6 +141,7 @@ int main(void)
 	mode=0;
 	ID=0;
 	data_1=0;
+  side=0;
 
 
   USART1_Init ( MYUBRR1 );
@@ -119,13 +155,12 @@ int main(void)
 	while(1)
   {
 
-
-		while(mode==0)
+		while(mode==0)      //選擇模式
 		{
 			if(i==1)
 			{
 				mode=get[0];
-				if(mode==128)
+				if(mode==128)  //若模式128
 						{
 								k=7500;         //將頭轉到7500，以表示進入mode128
 								USART1_Transmit(0b10000000);
@@ -139,7 +174,7 @@ int main(void)
 
 				    }
 
-						else if(mode==129)
+						else if(mode==129)  //若模式129
 						{
 								k=6000;       //將頭轉到6000，以表示進入mode129
 								USART1_Transmit(0b10000000);
@@ -201,7 +236,7 @@ int main(void)
 		i=0;
 	  }
 
-		if(mode==128)         //mode1 電腦教學模式
+		if(mode==128)         //mode128 電腦教學模式
 		{
 			// k=7500;
 			// USART1_Transmit(0b10000000);
@@ -211,7 +246,7 @@ int main(void)
 			// {get[j]=0;}
 
 			while (i<2) {//收集兩筆資料
-        if(get[0]==129 && i==1)   //若切換模式
+        if(get[0]==129 && i==1)   //若切換至mode129
         { mode=129;
           break;}
 
@@ -220,10 +255,11 @@ int main(void)
 				break;}
       }  //while (i<2)
 
-      if(i==2)
+      if(i==2)         //i==2表示已收集到兩筆資料
       {
-			ID=get[0];
-			convert_1(get[1]);
+			// ID=get[0];
+			ID_convert(get[0]);      //轉換ID
+			convert_1(get[1]);   //轉換角度資料
 			//printf("get[0]=%d,get[1]=%d\n",get[0],get[1] );
 			//printf("ID:%d position:%d \n",ID,data_1);
 
@@ -234,10 +270,10 @@ int main(void)
 			//_delay_ms(100);
 			USART1_Transmit(data_1&127);  //傳送角度
 
-			for(int j=0;j<100;j++)
-			{get[j]=0;}
-			i=0;
-    }  //if(get[0]!=129)
+			// for(int j=0;j<100;j++)
+			// {get[j]=0;}
+			// i=0;
+    }  //if(i==2)
 
 
       for(int j=0;j<100;j++)
