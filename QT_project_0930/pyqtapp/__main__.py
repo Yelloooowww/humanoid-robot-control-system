@@ -26,26 +26,12 @@ class GetAck(QThread):     #這是ack
         print('WaitForAck')
         # get=ser.read(1)
         # print(get)
-        print('假裝可以Ack = =+')
+        print('先假裝可以Ack = =+')
         self.AAACCCKKK.emit() #收到M128端的回應後發射訊號
-
-class TeachingByHandMode(QThread):     #手動模式執行序
-    I_Get_It= pyqtSignal(bytes)
-    def __init__(self,  parent=None):
-        super().__init__(parent)
-    def run(self):
-        while 1:
-            GetFromM128=ser.read(17)
-            print('17 bytes get')
-            self.I_Get_It.emit(GetFromM128) #收集17bytes資料後發射訊號
-
-
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.HandMode=TeachingByHandMode()
-        self.HandMode.I_Get_It.connect(self.spinbox_set_value)
         self.ack=GetAck()
         self.ack.AAACCCKKK.connect(self.SomethingAfterAck)
         self.setting()
@@ -78,8 +64,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_4.clicked.connect(self.save_dialog)
         self.pushButton_5.clicked.connect(self.get_file_dailog)
         self.pushButton_6.clicked.connect(self.to_the_best_position)
-        self.radioButton.setChecked(True)
-        self.radioButton.toggled.connect(self.choose_mode)
         self.spinBox.valueChanged['int'].connect(self.now_angle_func)
         self.spinBox_1.valueChanged['int'].connect(self.now_angle_func)
         self.spinBox_2.valueChanged['int'].connect(self.now_angle_func)
@@ -105,22 +89,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ser.open()
         time.sleep(5)
 
-
     def SomethingAfterAck(self):    #收到Ack以後要做的事
         if  self.Mode==128:
             print('收到Ack! Mode==128')
+            self.textBrowser.append('切換至:電腦教學模式')
             if self.flag==0:
                 print('Normal PC teaching')
-                self.textBrowser.append('切換至:電腦教學模式')
             if self.flag==1: #初始化至最佳位置
                 print('Init the position')
-                self.textBrowser.append('切換至:電腦教學模式(初始化位置)')
                 self.how_to_go_to_the_best_position()
                 self.flag=0
-        if  self.Mode==129:
-            print('收到Ack!!Mode==129')
-            self.textBrowser.append('切換至:手動教學模式')
-            self.HandMode.start()
         if  self.Mode==130:
             print('收到Ack!!! Mode==130')
             if self.flag==0:
@@ -132,12 +110,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.textBrowser.append('切換至:播放模式(播放檔案)')
                 self.how_to_get_file_and_play()
                 self.flag=0
-            # #等待播放完成
-            # #播完切回電腦教學模式
-            # self.Mode=128
-            # ser.write(bytes([self.Mode]))
-            # time.sleep(self.delay)
-            # self.ack.start()
+            #等待播放完成
+            for x in range(3):
+                print('等待播放完成',x)
+                time.sleep(1)
+            print('當作播完了XD')
+            #播完切回電腦教學模式
+            self.Mode=128
+            ser.write(bytes([self.Mode]))
+            time.sleep(self.delay)
+            self.ack.start()
 
     def test_actions(self):#切換到播放模式
         if self.accumulate_angle_data !=[]:
@@ -170,7 +152,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             while True:
                 line = f.readline()
                 if not line: break
-                self.send_matrix += [int(line)]
+                self.send_matrix += [int(line,16)]  # hex->int
             f.close()
             time.sleep(self.delay)
             print('size=',len(self.send_matrix))
@@ -188,7 +170,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 f = open(fileName, 'w', encoding = 'UTF-8')
                 data=self.accumulate_angle_data
                 for x in data:
-                    f.write(str(x))
+                    f.write(hex(x))  #轉16進位
                     f.write('\n')
                 f.close()
             self.accumulate_angle_data=[]
@@ -198,7 +180,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             print('目前無佔存之動作串')
             self.textBrowser.append('目前無佔存之動作串')
         #儲存完成切回電腦教學模式
-        self.Mode= 0+128
+        self.Mode= 128
         ser.write(bytes([self.Mode]))
         time.sleep(self.delay)
         self.ack.start()
@@ -223,32 +205,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser.append('刪除動作串')
         else:
             self.textBrowser.append('目前無佔存之動作串')
-
-    def choose_mode(self):   #用radioButton切換電腦or手動
-        if self.radioButton.isChecked() :
-            self.HandMode.terminate()
-            self.pushButton_2.setEnabled(True)
-            self.pushButton_3.setEnabled(True)
-            self.pushButton_4.setEnabled(True)
-            self.pushButton_5.setEnabled(True)
-            self.pushButton_6.setEnabled(True)
-            self.Mode= 0+128
-            ser.write(bytes([self.Mode]))
-            time.sleep(self.delay)
-            self.ack.start()
-            print('切換至:電腦教學模式')
-            self.textBrowser.append('切換至:電腦教學模式')
-        else:
-            self.Mode= 1+128
-            ser.write(bytes([self.Mode]))
-            time.sleep(self.delay)
-            self.ack.start()
-            #手動模式下將一些按鈕禁能
-            self.pushButton_2.setEnabled(False)
-            self.pushButton_3.setEnabled(False)
-            self.pushButton_4.setEnabled(False)
-            self.pushButton_5.setEnabled(False)
-            self.pushButton_6.setEnabled(False)
 
     def to_the_best_position(self):  #在電腦教學模式下
         self.flag=1
@@ -277,27 +233,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_14.setValue(90)
         self.spinBox_15.setValue(83)
         self.spinBox_16.setValue(75)
-
-    def spinbox_set_value(self,data): #手動模式下的漂浮Spinbox :))
-        print('spinbox_set_value~')
-        self.now_angle_data=data
-        self.spinBox.setValue(self.now_angle_data[0])
-        self.spinBox_1.setValue(self.now_angle_data[1])
-        self.spinBox_2.setValue(self.now_angle_data[2])
-        self.spinBox_3.setValue(self.now_angle_data[3])
-        self.spinBox_4.setValue(self.now_angle_data[4])
-        self.spinBox_5.setValue(self.now_angle_data[5])
-        self.spinBox_6.setValue(self.now_angle_data[6])
-        self.spinBox_7.setValue(self.now_angle_data[7])
-        self.spinBox_8.setValue(self.now_angle_data[8])
-        self.spinBox_9.setValue(self.now_angle_data[9])
-        self.spinBox_10.setValue(self.now_angle_data[10])
-        self.spinBox_11.setValue(self.now_angle_data[11])
-        self.spinBox_12.setValue(self.now_angle_data[12])
-        self.spinBox_13.setValue(self.now_angle_data[13])
-        self.spinBox_14.setValue(self.now_angle_data[14])
-        self.spinBox_15.setValue(self.now_angle_data[15])
-        self.spinBox_16.setValue(self.now_angle_data[16])
 
     def now_angle_func(self):  #電腦模式下 送出有改變的馬達ID &角度值
         if self.Mode==128:

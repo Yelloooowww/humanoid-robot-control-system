@@ -1088,45 +1088,7 @@
      </font>
     </property>
     <property name="text">
-     <string>設定</string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton">
-    <property name="geometry">
-     <rect>
-      <x>480</x>
-      <y>51</y>
-      <width>111</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>AcadEref</family>
-      <pointsize>6</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>電腦教學</string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_2">
-    <property name="geometry">
-     <rect>
-      <x>480</x>
-      <y>70</y>
-      <width>111</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>AcadEref</family>
-      <pointsize>6</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>手動教學</string>
+     <string>最佳位置</string>
     </property>
    </widget>
    <zorder>label</zorder>
@@ -1155,8 +1117,6 @@
    <zorder>pushButton_4</zorder>
    <zorder>pushButton_5</zorder>
    <zorder>pushButton_6</zorder>
-   <zorder>radioButton</zorder>
-   <zorder>radioButton_2</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
