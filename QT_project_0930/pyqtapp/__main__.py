@@ -170,7 +170,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 f = open(fileName, 'w', encoding = 'UTF-8')
                 data=self.accumulate_angle_data
                 for x in data:
-                    f.write(hex(x))  #轉16進位
+                    f.write(hex(x)[2:])  #轉16進位
                     f.write('\n')
                 f.close()
             self.accumulate_angle_data=[]
