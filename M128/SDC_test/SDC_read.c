@@ -1,5 +1,5 @@
 #include "ASA_Lib.h"
-#include "ASA_Lib_DAC00.h"
+// #include "ASA_Lib_DAC00.h"
 #include <math.h>
 #include <string.h>
 
@@ -160,11 +160,32 @@ int main(void)
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2)
   USART1_Init ( MYUBRR1 );
+
+	//檢查一下UART跟頭是否都正常
+	int r=3500;
+	USART1_Transmit(128);
+	USART1_Transmit(r>>7);
+	USART1_Transmit(r&127);
+	_delay_ms(1000);
+
+	r=7500;
+	USART1_Transmit(128);
+	USART1_Transmit(r>>7);
+	USART1_Transmit(r&127);
+	_delay_ms(1000);
+	r=11500;
+	USART1_Transmit(128);
+	USART1_Transmit(r>>7);
+	USART1_Transmit(r&127);
+	_delay_ms(1000);
+
 	uint8_t number;
 	printf("plz input a number (1~8) ");
 	scanf("%d",&number );
 	SDC_read(number);//選擇套裝動作1~8
-
+	//把洞洞板設定改回來
+	DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
+	PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2)
 	for(int i=0;i<100;i++)
 	{
 		if(y[i]==0)
@@ -173,7 +194,7 @@ int main(void)
 		USART1_Transmit(128);
 		USART1_Transmit(y[i]>>7);
 		USART1_Transmit(y[i]&127);
-		_delay_ms(100);
+		_delay_ms(1000);
 	}
 
 	printf("finish SDC1\n");
