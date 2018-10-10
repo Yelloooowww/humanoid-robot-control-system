@@ -26,7 +26,7 @@ void USART_Flush( void )
 void USART0_Init( unsigned int ubrr )
 {
 /* Set baud rate */
-// UCSR0B|=(1<<RXCIE0);  //致能TX，RX complete interrupt
+UCSR0B|=(1<<RXCIE0);  //致能TX，RX complete interrupt
 UBRR0H |= (unsigned char)(ubrr>>8);   //p.362 // fosc = 11.0592MHz，Baud Rate=9600，U2X=0 =>UBRR=71，U2X=1=>UBRR=143
 UBRR0L |= (unsigned char)ubrr;
 /* Enable receiver and transmitter */
@@ -40,7 +40,7 @@ UCSR0C |= (1<<UPM01)|(0<<UPM00)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00)|(0<<UCPOL0);/
 void USART1_Init( unsigned int ubrr )
 {
 /* Set baud rate */
-UCSR1B|=(1<<RXCIE1);  //致能TX，RX complete interrupt，沒有用到的話，不可以致能
+// UCSR1B|=(1<<RXCIE1);  //致能TX，RX complete interrupt，沒有用到的話，不可以致能
 UBRR1H |= (unsigned char)(ubrr>>8);   //p.362 // fosc = 11.0592MHz，Baud Rate=9600，U2X=0 =>UBRR=71，U2X=1=>UBRR=143
 UBRR1L |= (unsigned char)ubrr;
 /* Enable receiver and transmitter */
@@ -250,7 +250,7 @@ void SDC_read(uint8_t package)
 
 int main(void)
 {
-  ASA_M128_set();
+  // ASA_M128_set();
   // printf("start test\n");
 	// printf("start test2s\n");
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
