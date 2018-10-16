@@ -105,8 +105,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_15.valueChanged['int'].connect(self.now_angle_func)
         self.spinBox_16.valueChanged['int'].connect(self.now_angle_func)
         self.radioButton.toggled.connect(self.use_radiobutton_to_SetMode)
-        self.radioButton_2.toggled.connect(self.use_radiobutton_to_SetMode)
-        self.radioButton_3.toggled.connect(self.use_radiobutton_to_SetMode)
+        # self.radioButton_2.toggled.connect(self.use_radiobutton_to_SetMode)
+        # self.radioButton_3.toggled.connect(self.use_radiobutton_to_SetMode)
 
     def setting(self):     #通訊埠設定
         items=("COM1","COM2","COM3","COM4","COM5","COM6","COM7","COM8","COM9","COM10","COM11","COM12","COM13","COM14","COM15","COM16","COM17","COM18","COM19","COM20","COM21","COM22","COM23","COM24","COM25")
@@ -143,6 +143,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_14.setEnabled(True)
             self.spinBox_15.setEnabled(True)
             self.spinBox_16.setEnabled(True)
+            self.radioButton.setEnabled(True)
+            self.radioButton_2.setEnabled(True)
+            self.radioButton_3.setEnabled(True)
         if  self.Mode==130:
             print('收到Ack!!! Mode==130')
             self.textBrowser.append('播放模式')
@@ -169,6 +172,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_14.setEnabled(False)
             self.spinBox_15.setEnabled(False)
             self.spinBox_16.setEnabled(False)
+            self.radioButton.setEnabled(True)
+            self.radioButton_2.setEnabled(True)
+            self.radioButton_3.setEnabled(False)
         if  self.Mode==131:
             print('收到Ack!!! Mode==131')
             self.textBrowser.append('模擬遙控器模式')
@@ -195,6 +201,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_14.setEnabled(False)
             self.spinBox_15.setEnabled(False)
             self.spinBox_16.setEnabled(False)
+            self.radioButton.setEnabled(True)
+            self.radioButton_2.setEnabled(False)
+            self.radioButton_3.setEnabled(True)
             self.RC_control.show()
             self.RC_control.exec_()
 
