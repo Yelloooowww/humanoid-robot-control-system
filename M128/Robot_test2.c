@@ -33,8 +33,8 @@ UBRR0L |= (unsigned char)ubrr;
 UCSR0B |= (1<<RXEN0);//|(1<<TXEN0);    //enables the USARTn Receiver，enables the USARTn Transmitter
 /* Set frame format: 8data, 2stop bit */
 // UCSR1C = (0<<USBS1)|(3<<UCSZ10); //selects the number of stop bits，USBS1=1=> 2 bits
-UCSR0C |= (1<<UPM01)|(0<<UPM00)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00)|(0<<UCPOL0);//Character Size=8 bits，UCPOL1=上升/下降
-
+UCSR0C |= (1<<UPM01)|(0<<UPM00)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00)|(0<<UCPOL0);//(1<<UPM01)|(0<<UPM00)=>Parity ModeEnabled, Even Parity
+//(1<<USBS0)=>Stop Bit(s) 2-bits，(1<<UCSZ01)|(1<<UCSZ00)=>Character Size=8 bits，UCPOL1=上升/下降
 }
 
 void USART1_Init( unsigned int ubrr )
