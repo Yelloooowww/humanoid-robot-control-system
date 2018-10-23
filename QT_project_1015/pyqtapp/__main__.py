@@ -209,8 +209,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def SimulateRemoteControl(self,value):   #遙控器模式下送訊的地方
         print('YouPress=',value)
-        ser.write(bytes([131]))
-        time.sleep(1)
+        # ser.write(bytes([131]))
+        # time.sleep(1)
         ser.write(bytes([value]))
 
 
@@ -227,6 +227,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.ack.start()
         if self.radioButton_3.isChecked()==True:
             self.Mode=131
+            ser.write(bytes([self.Mode]))
+            time.sleep(self.delay)
             self.ack.start()
 
 
