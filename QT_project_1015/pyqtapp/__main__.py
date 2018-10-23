@@ -64,7 +64,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.now_angle_data=[]
         self.accumulate_angle_data=[]
         self.send_matrix=[]
-        self.tmp=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        self.tmp=[35,35,45,40,67,40,60,49,42,35,45,40,67,40,60,49,42]
         self.setupUi(self)
         self.vision_effect()
         self.control_object()
