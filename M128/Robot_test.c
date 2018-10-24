@@ -1,4 +1,4 @@
-#include "ASA_Lib.h" //測試程式
+#include "ASA_Lib.h" //測試程式 10/24
 #include "ASA_Lib_DAC00.h"
 #include <math.h>
 #include <string.h>
@@ -255,8 +255,10 @@ int main(void)
 	printf("start test2s\n");
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2)
-	DDRB=0xff;   //用PB1~4控制機器人左右半邊以及要送還是收
-	//DDRF=0xff;
+	PORTB &= ~(1<<PB7);
+	PORTB &= ~(1<<PB5);
+	// DDRB=0xff;   //用PB1~4控制機器人左右半邊以及要送還是收
+	DDRF=0xff;
 
 	i=0;
 	for(int j=0;j<100;j++)
@@ -288,7 +290,7 @@ int main(void)
 				mode=get[0];
 				if(mode==128)  //若模式128
 						{
-							printf("get128\n" );
+							printf("get 128\n" );
 
 							// side=2;
 							// 	k=8000;         //將頭轉到7500，以表示進入mode128
@@ -313,6 +315,7 @@ int main(void)
 				    }
 				else if(mode==130)  //若模式130
 					  {
+							printf("get 130\n" );
 								side=2;
 								k=6000;       //將頭轉到6000，以表示進入mode130
 								USART1_Transmit(0b10000000);
@@ -323,6 +326,7 @@ int main(void)
 						}
 				else if(mode==131)  //若模式131
 						{
+							printf("get 131\n" );
 								side=2;
 								k=6000;       //將頭轉到6000，以表示進入mode131
 								USART1_Transmit(0b10000000);
@@ -351,7 +355,7 @@ int main(void)
 
 		if(mode==128)         //mode128 電腦教學模式
 		{
-			printf("mode128\n");
+			printf("start mode128\n");
 
 			while (i<2) {//收集兩筆資料
         if(get[0]==129 && i==1)   //若切換至mode129
@@ -433,7 +437,7 @@ int main(void)
 
 		else if(mode==129)         //mode2 手動教學模式
 		{
-			printf("mode129\n" );
+			printf("start mode129\n" );
 			for(int j=0;j<100;j++)
 			{get[j]=0;
 			position[j]=0;}
@@ -443,85 +447,130 @@ int main(void)
 
 		else if(mode==130)         //mode130 播放模式
 		{
-			printf("mode130\n" );
+			printf("start mode130\n" );
 			// _delay_ms(2000);
 			// USART0_Transmit(3);//ACK，表示進入mode130
-
-			while (i<1) {     //接收資料總數
-				sum=get[0];
+			while (i<1) {
+				;
 			}
 
-			for(int j=0;j<100;j++)
-			{get[j]=0;}
-
-			while (i<sum) {;}    //等待至接收完?筆資料
-
-			for(int j=0;j<sum;j++)    //轉換資料
-			{position[j]=get[j]*100;} //轉換資料 35~115 => 3500~11500
-
-			for(int l=0;l<(sum/17);l++)         // 播放(sum/17)個分解動作
+			if(get[0]==128)
 			{
-				for(int k=0;k<17;k++)
-				{
-					USART1_Transmit(128+k);  // 128=0b1000 0000
-					USART1_Transmit(position[(l*17+k)]>>7);
-					USART1_Transmit(position[(l*17+k)]&127);
-					printf("position=%d\n",position[(l*17+k)] );
-				}
-				_delay_ms(1000);   //每個分解動作之間間隔1秒
+				mode=0;      //播放結束以後進入模式選擇(mode==0)
+				i=1;         //已選擇模式
+				get[0]=128;  //選擇的模式為mode128
 			}
 
-			_delay_ms(2000);
-			// USART0_Transmit(3);//ACK，表示撥放完動作了
+			else if(!(get[0]%17))
+			{
+				sum=get[0];
 
-			for(int j=0;j<100;j++)
-			{get[j]=0;
-			position[j]=0;}
+				while (i<=sum) {sum=get[0];}    //等待至接收完?筆資料
+				printf("sum=%d\n",sum );
 
-			mode=0;      //播放結束以後進入模式選擇(mode==0)
-			i=1;         //已選擇模式
-			get[0]=128;  //選擇的模式為mode128
+				for(int j=1;j<=sum;j++)    //轉換資料
+				{position[j]=get[j]*100;
+				 if(position[j]>11500 || position[j]<3500)
+				 {position[j]=7500;}
+			  } //轉換資料 35~115 => 3500~11500
+
+				for(int l=0;l<(sum/17);l++)         // 播放(sum/17)個分解動作
+				{
+					for(int k=0;k<17;k++)
+					{
+						USART1_Transmit(128+k);  // 128=0b1000 0000
+						USART1_Transmit(position[(l*17+k)+1]>>7);
+						USART1_Transmit(position[(l*17+k)+1]&127);
+						printf("position %d=%d\n",(l*17+k+1),position[(l*17+k)+1] );
+					}
+					_delay_ms(1000);   //每個分解動作之間間隔1秒
+				}
+				_delay_ms(2000);
+
+				for(int j=0;j<100;j++)
+				{get[j]=0;
+				position[j]=0;}
+
+				mode=0;      //播放結束以後進入模式選擇(mode==0)
+				i=1;         //已選擇模式
+				get[0]=130;  //選擇的模式為mode130
+			}
+
+			else
+			{
+				mode=0;      //播放結束以後進入模式選擇(mode==0)
+				i=1;         //已選擇模式
+				get[0]=130;  //選擇的模式為mode130
+			}
+
+
+
 	  }                      //if(mode==130)
 
 		else if(mode==131)    //播放套裝動作
 		{
-			printf("mode131\n" );
+			printf("start mode131\n" );
 			for(int j=0;j<100;j++)
 			{get[j]=0;}
 			uint8_t number;
-			// _delay_ms(2000);
-			// USART0_Transmit(4);//ACK，表示進入mode131
+
+			DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
+			PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2)
+			PORTB &= ~(1<<PB7);
+			PORTB &= ~(1<<PB5);
+
 			while (i<1) {//接收套裝動作編號(1~8)
 				;
 			}
-			number=get[0];
-
-	    // printf("plz input a number (1~8) ");
-	    // scanf("%d",&number );
-	    SDC_read(number);//選擇套裝動作1~8
-			DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
-	    PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2)
-
-
-			for(int l=0;l<(sum/17);l++)         // 播放(sum/17)個分解動作
+			if(get[0]==128)
 			{
-				for(int k=0;k<17;k++)
-				{
-					USART1_Transmit(128+k);  // 128=0b1000 0000
-					USART1_Transmit(y[(l*17+k)]>>7);
-					USART1_Transmit(y[(l*17+k)]&127);
-					printf("position=%d\n",y[(l*17+k)] );
-				}
-				_delay_ms(1000);   //每個分解動作之間間隔1秒
+				mode=0;      //播放結束以後進入模式選擇(mode==0)
+				i=1;         //已選擇模式
+				get[0]=128;  //選擇的模式為mode128
 			}
 
-			for(int j=0;j<100;j++)
-			{get[j]=0;
-		  y[j]=0;}
+			else if(get[0]>=1 && get[0]<=8)
+			{
+				number=get[0];
+				printf("chosen number %d\n",number );
 
-			mode=0;      //播放結束以後進入模式選擇(mode==0)
-			i=1;         //已選擇模式
-			get[0]=128;  //選擇的模式為mode128
+		    // printf("plz input a number (1~8) ");
+		    // scanf("%d",&number );
+		    SDC_read(number);//選擇套裝動作1~8
+				DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
+		    PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2)
+				PORTB &= ~(1<<PB7);
+				PORTB &= ~(1<<PB5);
+
+
+				for(int l=0;l<(sum/17);l++)         // 播放(sum/17)個分解動作
+				{
+					for(int k=0;k<17;k++)
+					{
+						USART1_Transmit(128+k);  // 128=0b1000 0000
+						USART1_Transmit(y[(l*17+k)]>>7);
+						USART1_Transmit(y[(l*17+k)]&127);
+						printf("position=%d\n",y[(l*17+k)] );
+					}
+					_delay_ms(1000);   //每個分解動作之間間隔1秒
+				}
+
+				for(int j=0;j<100;j++)
+				{get[j]=0;
+			  y[j]=0;}
+
+				mode=0;      //播放結束以後進入模式選擇(mode==0)
+				i=1;         //已選擇模式
+				get[0]=131;  //選擇的模式為mode131
+			}
+
+			else
+			{
+				mode=0;      //播放結束以後進入模式選擇(mode==0)
+				i=1;         //已選擇模式
+				get[0]=131;  //選擇的模式為mode131
+			}
+
 		}//else if(mode==131)
 
 
