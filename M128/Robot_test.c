@@ -195,17 +195,17 @@ void SDC_read(uint8_t package)
 
 					if(swap_buffer[i-1]>=48 && swap_buffer[i-1]<=57)
 					{swap_buffer[i-1]=swap_buffer[i-1]-48;}
-					if(swap_buffer[i-1]>=97 && swap_buffer[i-1]<=102)
+					else if(swap_buffer[i-1]>=97 && swap_buffer[i-1]<=102)
 					{swap_buffer[i-1]=swap_buffer[i-1]-87;}
-				 else if(swap_buffer[i-1]>=65 && swap_buffer[i-1]<=70)
-				 {swap_buffer[i-1]=swap_buffer[i-1]-55;}
+				  else if(swap_buffer[i-1]>=65 && swap_buffer[i-1]<=70)
+				  {swap_buffer[i-1]=swap_buffer[i-1]-55;}
 
 					if(swap_buffer[i]>=48 && swap_buffer[i]<=57)
 					{swap_buffer[i]=swap_buffer[i]-48;}
-					if(swap_buffer[i]>=97 && swap_buffer[i]<=102)
+					else if(swap_buffer[i]>=97 && swap_buffer[i]<=102)
 					{swap_buffer[i]=swap_buffer[i]-87;}
-				 else if(swap_buffer[i]>=65 && swap_buffer[i]<=70)
-				 {swap_buffer[i]=swap_buffer[i]-55;}
+				  else if(swap_buffer[i]>=65 && swap_buffer[i]<=70)
+				  {swap_buffer[i]=swap_buffer[i]-55;}
 
 					data[z]=swap_buffer[i-1]*16+swap_buffer[i];
 					z++;
@@ -309,10 +309,35 @@ int main(void)
 			}
 				mode=get[0];
 				switch (mode) {
-					case 128:{printf("get 128\n"); } break;
-					case 129:{printf("get 129\n"); } break;
-					case 130:{printf("get 130\n"); } break;
-					case 131:{printf("get 131\n"); } break;
+					case 128:{
+						printf("get 128\n");
+						int tmp=4000;
+						ID_convert(0);
+						USART1_Transmit(128+ID);  // 128=0b1000 0000
+						USART1_Transmit(tmp>>7);
+						USART1_Transmit(tmp&127);} break;
+
+					case 129:{
+						printf("get 129\n");
+						int tmp=6000;
+						ID_convert(0);
+						USART1_Transmit(128+ID);  // 128=0b1000 0000
+						USART1_Transmit(tmp>>7);
+						USART1_Transmit(tmp&127);} break;
+					case 130:{
+						printf("get 130\n");
+						int tmp=8000;
+						ID_convert(0);
+						USART1_Transmit(128+ID);  // 128=0b1000 0000
+						USART1_Transmit(tmp>>7);
+						USART1_Transmit(tmp&127);} break;
+					case 131:{
+						printf("get 131\n");
+						int tmp=10000;
+						ID_convert(0);
+						USART1_Transmit(128+ID);  // 128=0b1000 0000
+						USART1_Transmit(tmp>>7);
+						USART1_Transmit(tmp&127);} break;
 					default: {printf("wrong\n");
 					for(int j=0;j<i;j++){
 									{get[j]=0;}
@@ -333,40 +358,41 @@ int main(void)
 
 		switch (mode) {
 			case 128:{
-			printf("start mode128\n");
+				printf("start mode128\n");
 
-			while (i<2) {//收集兩筆資料
-        if(get[0]==129 && i==1)   //若切換至mode129
-        { mode=129;
-          break;}
-				if(get[0]==130 && i==1)   //若切換至mode129
-	      { mode=130;
-	        break;}
-				if(get[0]==131 && i==1)   //若切換至mode129
-		    { mode=131;
-		      break;}
+				while (i<2) {//收集兩筆資料
+					if(i==1)
+					{
+						switch (get[0]) {
+							case 129:{mode=129;i=2;}break;//若切換至mode129
+							case 130:{mode=130;i=2;}break;//若切換至mode130
+							case 131:{mode=131;i=2;}break;//若切換至mode131
+				  	}
+			  	}
 
-				if(get[0]>17)   //若ID錯誤
-				{ i=0;
-				  break;}
       }  //while (i<2)
+
+			if(get[0]>17){get[0]=0;}
 
 			if(mode==129)//進入mode128後又切換成129
 			{
+				printf("switch to mode 129\n");
 				mode=0;//進入模式選擇
 				i=1;//已選擇模式
 				get[0]=129;//選擇的模式為mode129
 			}
 
-			if(mode==130)//進入mode128後又切換成130
+			else if(mode==130)//進入mode128後又切換成130
 			{
+				printf("switch to mode 130\n");
 				mode=0;//進入模式選擇
 				i=1;//已選擇模式
 				get[0]=130;//選擇的模式為mode130
 			}
 
-			if(mode==131)//進入mode128後又切換成131
+			else if(mode==131)//進入mode128後又切換成131
 			{
+				printf("switch to mode 131\n");
 				mode=0;//進入模式選擇
 				i=1;//已選擇模式
 				get[0]=131;//選擇的模式為mode131
