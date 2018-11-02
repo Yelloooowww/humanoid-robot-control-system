@@ -1,4 +1,4 @@
-#include "ASA_Lib.h" //測試程式 10/30
+#include "ASA_Lib.h" //測試程式 11/2
 // #include "ASA_Lib_DAC00.h"
 #include <math.h>
 #include <string.h>
@@ -101,21 +101,41 @@ void convert_2(int a,int b)
 
 void ID_convert(int a)     //將收到的ID(0~16) 轉換為 機器人上的ID且用side來區分左、右半邊
 {
-	if(a<3)
-	{ID=a;}
-	else if(a==3)
-	{ID=a+1;}
-	else if(a>3 && a<9)
-	{ID=a+2;}
-
-	else if(a==9 || a==10)
-	{ID=a-8;}
-	else if(a==11)
-	{ID=a-7;}
-	else if(a>11 && a<17)
-	{ID=a-6;}
-	else
-	{ID=0;}
+	switch (a) {
+		case 0: {ID=a;}   break;
+		case 1: {ID=a;}   break;
+ 	  case 2: {ID=a;}   break;
+		case 3: {ID=a+1;} break;
+ 	  case 4: {ID=a+2;} break;
+ 	  case 5: {ID=a+2;} break;
+ 	  case 6: {ID=a+2;} break;
+ 	  case 7: {ID=a+2;} break;
+ 	  case 8: {ID=a+2;} break;
+		case 9: {ID=a-8;} break;
+		case 10:{ID=a-8;} break;
+		case 11:{ID=a-7;} break;
+ 	  case 12:{ID=a-6;} break;
+		case 13:{ID=a-6;} break;
+ 	  case 14:{ID=a-6;} break;
+ 	  case 15:{ID=a-6;} break;
+ 	  case 16:{ID=a-6;} break;
+ 	  default:{ID=0;}   break;
+	}
+	// if(a<3)
+	// {ID=a;}
+	// else if(a==3)
+	// {ID=a+1;}
+	// else if(a>3 && a<9)
+	// {ID=a+2;}
+	//
+	// else if(a==9 || a==10)
+	// {ID=a-8;}
+	// else if(a==11)
+	// {ID=a-7;}
+	// else if(a>11 && a<17)
+	// {ID=a-6;}
+	// else
+	// {ID=0;}
 
 	if(a>0 && a<9)//若為左半邊
 	{side=1;}
@@ -282,10 +302,8 @@ int main(void)
   {
 
 		while(mode==0)      //選擇模式
-		{//printf("hi\n" );
-		//_delay_ms(100);
-			// if(i==1)
-			// {
+		{
+
 			while (i<1) {  //接收命令
 				;
 			}
@@ -296,74 +314,19 @@ int main(void)
 					case 130:{printf("get 130\n"); } break;
 					case 131:{printf("get 131\n"); } break;
 					default: {printf("wrong\n");
-					for(int j=0;j<100;j++){
+					for(int j=0;j<i;j++){
 									{get[j]=0;}
 									i=0;
 									mode=0; }   break;
 				  }//default
 			 }//switch case
 
-				// if(mode==128)  //若模式128
-				// 		{
-				// 			printf("get 128\n" );
-				//
-				// 			// side=2;
-				// 			// 	k=8000;         //將頭轉到7500，以表示進入mode128
-				// 			// 	USART1_Transmit(0b10000000);
-				// 			// 	USART1_Transmit(k>>7);
-				// 			// 	USART1_Transmit(k&127);
-				// 			// 	_delay_ms(2000);
-				// 				// USART0_Transmit(1);
-				//
-				//     }
-				//
-				// else if(mode==129)  //若模式129
-				//     {
-				// 			printf("get129\n" );
-				// 			  // side=2;
-				// 				// k=6000;       //將頭轉到6000，以表示進入mode129
-				// 				// USART1_Transmit(0b10000000);
-				// 				// USART1_Transmit(k>>7);
-				// 				// USART1_Transmit(k&127);
-				// 				// _delay_ms(2000);
-				// 				// USART0_Transmit(2);
-				//     }
-				// else if(mode==130)  //若模式130
-				// 	  {
-				// 			printf("get 130\n" );
-				// 				side=2;
-				// 				k=6000;       //將頭轉到6000，以表示進入mode130
-				// 				USART1_Transmit(0b10000000);
-				// 				USART1_Transmit(k>>7);
-				// 				USART1_Transmit(k&127);
-				// 				_delay_ms(2000);
-				// 						// USART0_Transmit(2);
-				// 		}
-				// else if(mode==131)  //若模式131
-				// 		{
-				// 			printf("get 131\n" );
-				// 				side=2;
-				// 				k=6000;       //將頭轉到6000，以表示進入mode131
-				// 				USART1_Transmit(0b10000000);
-				// 				USART1_Transmit(k>>7);
-				// 				USART1_Transmit(k&127);
-				// 				_delay_ms(2000);
-				// 								// USART0_Transmit(2);
-				// 		}
-				// else       //如果不是上述的模式，視為錯誤資料
-				// 		{
-				// 				for(int j=0;j<100;j++)
-				// 				{get[j]=0;}
-				// 				i=0;
-				// 				mode=0;
-				// 		}
 
-			// }   //if(i==1)
 		}    //while for the mode=0
 
 		if(mode>0)        //選擇完mode以後，將矩陣清空
 		{
-		for(int j=0;j<100;j++)
+		for(int j=0;j<i;j++)
 		{get[j]=0;}
 		i=0;
 	  }
@@ -418,10 +381,11 @@ int main(void)
 				USART1_Transmit(128+ID);       //傳送ID
 				USART1_Transmit(data_1>>7);  //傳送角度
 				USART1_Transmit(data_1&127);  //傳送角度
+				printf("side=%d\n",side );
 				printf("ID=%d\n",ID );
 				printf("position=%d\n",data_1 );
 
-				for(int j=0;j<100;j++)
+				for(int j=0;j<i;j++)
 				{get[j]=0;}
 				mode=0;//進入模式選擇
 				i=1;//已選擇模式
@@ -430,7 +394,7 @@ int main(void)
 
 			else if(i==0)//若ID錯誤，清空資料
 			{
-				for(int j=0;j<100;j++)
+				for(int j=0;j<i;j++)
 				{get[j]=0;}
 				mode=0;//進入模式選擇
 				i=1;//已選擇模式
@@ -439,7 +403,7 @@ int main(void)
 
 	  	if(i>2)
 		  {
-				for(int j=0;j<100;j++)
+				for(int j=0;j<i;j++)
 				{get[j]=0;}
 				mode=0;//進入模式選擇
 				i=1;//已選擇模式
@@ -481,16 +445,17 @@ int main(void)
 				{
 					for(int k=0;k<17;k++)
 					{
-						USART1_Transmit(128+k);  // 128=0b1000 0000
+						ID_convert(k);
+						USART1_Transmit(128+ID);  // 128=0b1000 0000
 						USART1_Transmit(position[(l*17+k)+1]>>7);
 						USART1_Transmit(position[(l*17+k)+1]&127);
-						printf("position %d=%d\n",(l*17+k+1),position[(l*17+k)+1] );
+						printf("side=%d, ID %2d, position=%d\n",side,ID,position[(l*17+k)+1] );
 					}
 					_delay_ms(1000);   //每個分解動作之間間隔1秒
 				}
-				_delay_ms(2000);
+				// _delay_ms(2000);
 
-				for(int j=0;j<100;j++)
+				for(int j=0;j<i;j++)
 				{get[j]=0;
 				position[j]=0;}
 
@@ -512,7 +477,7 @@ int main(void)
 		case 131:
 		{
 			printf("start mode131\n" );
-			for(int j=0;j<100;j++)
+			for(int j=0;j<i;j++)
 			{get[j]=0;}
 			uint8_t number;
 
@@ -553,13 +518,13 @@ int main(void)
 						USART1_Transmit(128+ID);  // 128=0b1000 0000
 						USART1_Transmit(y[(l*17+k)]>>7);
 						USART1_Transmit(y[(l*17+k)]&127);
-						printf("ID=%d\n",ID );
-						printf("position=%d\n",y[(l*17+k)] );
+						printf("side=%d, ID %2d, position=%d\n",side,ID,y[(l*17+k)] );
+
 					}
 					_delay_ms(1000);   //每個分解動作之間間隔1秒
 				}
 
-				for(int j=0;j<100;j++)
+				for(int j=0;j<i;j++)
 				{get[j]=0;
 			  y[j]=0;}
 
@@ -579,7 +544,7 @@ int main(void)
 
 
 		default: {printf("wrong\n");
-			for(int j=0;j<100;j++){
+			for(int j=0;j<i;j++){
 							{get[j]=0;}
 							i=0;
 							mode=0; }   break;
