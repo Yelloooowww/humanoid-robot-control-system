@@ -1,4 +1,7 @@
-#include "ASA_Lib.h" //測試程式 11/2
+//2018.11.06
+//在ID convert後加上PORTF改正，解決半邊延遲問題
+
+#include "ASA_Lib.h" 
 // #include "ASA_Lib_DAC00.h"
 #include <math.h>
 #include <string.h>
@@ -53,26 +56,26 @@ UCSR1C |= (1<<UPM11)|(0<<UPM10)|(1<<USBS1)|(1<<UCSZ11)|(1<<UCSZ10)|(0<<UCPOL1);/
 void USART1_Transmit( unsigned char data )
 {
 
-/* Wait for empty transmit buffer */
+	/* Wait for empty transmit buffer */
 
-/* Put data into buffer, sends the data */
-// PORTB|=(1<<PB4);    //收訊關閉
-// PORTB|=(1<<PB2);    //收訊關閉
-DDRF = 0xFF;
-// PORTF|=(1<<PF6);    //送訊關閉
-// PORTF|=(1<<PF7);    //送訊關閉
+	/* Put data into buffer, sends the data */
+	// PORTB|=(1<<PB4);    //收訊關閉
+	// PORTB|=(1<<PB2);    //收訊關閉
+	DDRF = 0xFF;
+	// PORTF|=(1<<PF6);    //送訊關閉
+	// PORTF|=(1<<PF7);    //送訊關閉
 
-// if(side==1) //藍色，頭
-// {PORTF =191;}  //左半邊送訊打開 191==1011 1111 ，PF6打開 ，機器人下面那排
-//
-// if(side==2)//紅色
-// {PORTF =127;}  //右半邊送訊打開
-//printf("transmit:%d\n",data );
-// _delay_ms(1000);
+	// if(side==1) //藍色，頭
+	// {PORTF =191;}  //左半邊送訊打開 191==1011 1111 ，PF6打開 ，機器人下面那排
 
-while ( !( UCSR1A & (1<<UDRE1)) )  //If UDREn is one, the buffer is empty
-;
-UDR1 = data;
+	// if(side==2)//紅色
+	// {PORTF =127;}  //右半邊送訊打開
+	// printf("transmit:%d\n",data );
+	// _delay_ms(1000);
+
+	while ( !( UCSR1A & (1<<UDRE1)) )  //If UDREn is one, the buffer is empty
+	;
+	UDR1 = data;
 
 }
 
@@ -104,9 +107,19 @@ void convert_2(int a,int b)
 void ID_convert(int a)     //將收到的ID(0~16) 轉換為 機器人上的ID且用side來區分左、右半邊
 {
 	if(a>0 && a<9)//若為左半邊
-	{side=2;}
+	{
+		// DDRF = 0xFF;
+		side=2;
+		// PORTF =127;
+	}
 	if(a==0 || a>=9)         //若為右半邊，頭、藍色
-	{side=1;}
+	{
+		// DDRF = 0xFF;
+		side=1;
+		// PORTF =191;
+	}
+	// _delay_ms(1000);
+
 	switch (a) {
 		case 0: {ID=a;}   break;
 		case 1: {ID=a;}   break;
@@ -413,7 +426,7 @@ int main(void)
 
 				if(side==2)//紅色
 				{PORTF =127;}  //右半邊送訊打開
-				_delay_ms(1000);
+				// _delay_ms(1);
 
 				USART1_Transmit(128+ID);       //傳送ID
 				USART1_Transmit(data_1>>7);  //傳送角度
@@ -483,6 +496,11 @@ int main(void)
 					for(int k=0;k<17;k++)
 					{
 						ID_convert(k);
+						if(side==1) //藍色，頭
+						{PORTF =191;}  //左半邊送訊打開 191==1011 1111 ，PF6打開 ，機器人下面那排
+
+						if(side==2)//紅色
+						{PORTF =127;}  //右半邊送訊打開
 						USART1_Transmit(128+ID);  // 128=0b1000 0000
 						USART1_Transmit(position[(l*17+k)+1]>>7);
 						USART1_Transmit(position[(l*17+k)+1]&127);
@@ -491,6 +509,16 @@ int main(void)
 					_delay_ms(1000);   //每個分解動作之間間隔1秒
 				}
 				// _delay_ms(2000);
+				int tmp=5000;
+				ID_convert(0);
+				if(side==1) //藍色，頭
+				{PORTF =191;}  //左半邊送訊打開 191==1011 1111 ，PF6打開 ，機器人下面那排
+
+				if(side==2)//紅色
+				{PORTF =127;}  //右半邊送訊打開
+				USART1_Transmit(128+ID);  // 128=0b1000 0000
+				USART1_Transmit(tmp>>7);
+				USART1_Transmit(tmp&127);
 
 				for(int j=0;j<i;j++)
 				{get[j]=0;
@@ -552,6 +580,11 @@ int main(void)
 					for(int k=0;k<17;k++)
 					{
 						ID_convert(k);
+						if(side==1) //藍色，頭
+						{PORTF =191;}  //左半邊送訊打開 191==1011 1111 ，PF6打開 ，機器人下面那排
+
+						if(side==2)//紅色
+						{PORTF =127;}  //右半邊送訊打開
 						USART1_Transmit(128+ID);  // 128=0b1000 0000
 						USART1_Transmit(y[(l*17+k)]>>7);
 						USART1_Transmit(y[(l*17+k)]&127);
