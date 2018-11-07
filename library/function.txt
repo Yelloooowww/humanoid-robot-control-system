@@ -1,0 +1,28 @@
+int mode,ID,angle,code;
+int data[100];
+int SDC_data[100];
+volatile char get[100];
+
+
+void KONDO_data_convert(void)
+void KONDO_SDC_read(void)
+void KONDO_SDC_write(void)
+
+資料格式  (get[])
+教學模式: mode128:[128,ID,angle]
+播放模式: mode130:[130,資料總數,資料1,資料2....]
+套裝動作: mode131:[131,code(1~8)]
+SD卡寫入: mode132:[132,code(1~8),資料總數,資料1,資料2....]
+
+資料格式範例  (get[])
+mode128:[128,3,75]，第三軸轉到7500
+mode130:[130,17,75,75,75,75,75,75,75,75,75,75,75,76,76,76,76,76,76]，第0~10軸轉到7500 第11~16軸轉到7600
+mode131:[131,2]，讀取SD卡中 檔名SDC2的資料並播放
+mode132:[132,3,34,資料1,資料2....]，將資料(共34筆)寫入SD卡中，檔名為SDC3的檔案
+
+
+資料格式  (SDC_data[]、data[])
+SDC_data[]=[資料總數,資料1,資料2....]，資料總數為17的倍數
+data[]=[資料總數,資料1,資料2....]，資料總數為17的倍數
+
+以上都可以討論
