@@ -3,7 +3,7 @@ import sys
 # import numpy as np
 import time
 import serial
-# import functools
+import functools
 from pyqtapp.ui_mainwindow import Ui_MainWindow
 from pyqtapp.ui_remote_control_dialog import Ui_Dialog
 from PyQt5.QtWidgets import QDialog,QMainWindow, QApplication,QLabel,QWidget,QVBoxLayout
@@ -80,16 +80,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ser.open()
         time.sleep(5)
 
-    def encoder_and_send_pac(self,data): #通訊封包
+    def what_is_type(self,data):   #幫通訊封包定義的type
+        if data[0]==128:
+            return 1
+        elif data[0]==130:
+            return 2
+        elif data[0]==131:
+            return 3
+        elif data[0]==132:
+            return 4
+        else:
+            return False
+
+    def encoder_and_send_pac(self,data):  #通訊封包
         pac=[]
-        # pac+=[171,171,171]  #封包頭
-        # pac += [len(data)]   #資料長度
-        pac += data
-        check= [(sum(data))%2] #基偶檢查
-        # pac += check
+        pac +=  [253]  #Header=0xfd
+        typeeeee= self.what_is_type(data)
+        pac+=bytes([typeeeee]) #type
+        l=bytes([len(data)>>8,len(data)&0xff])
+        pac+= l  #bytes(2bytes)
+        pac += data  #data
+        checksum= bytes([(sum(data)+sum(l))&0xFF])
+        pac += checksum #checksum
         for x in pac:
             ser.write(bytes([x]))
+            print('pac=',x)
             time.sleep(self.delay)
+
 
     def total_table_set(self):  #總表設定
         self.tableWidget.setHorizontalHeaderLabels(['定格1','定格2','定格3','定格4','定格5','定格6','定格7','定格8','定格9','定格10'])
