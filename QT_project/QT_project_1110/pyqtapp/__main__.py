@@ -250,7 +250,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             print('num=',self.num_of_active)
             self.total_table_update()  #更新總表
 
-            if self.num_of_active >1:
+            if self.num_of_active >=1:
                 #轉回上一個位置
                 tmp=len(self.accumulate_angle_data)-17
                 print('tmp=',tmp)
