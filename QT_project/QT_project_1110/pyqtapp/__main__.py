@@ -14,6 +14,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QThread, pyqtSignal
 
+from pyqtapp import images_rc
+
 
 ser = serial.Serial()
 ser.baudrate = 9600
@@ -115,8 +117,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def vision_effect(self):   #設置一些圖片而已
         self.setWindowTitle('KHR-3HV')
-        self.setWindowIcon(QIcon('.\pyqtapp\icon.ico'))
-        self.label.setPixmap(QPixmap(".\pyqtapp\_background.jpg"))
+        self.setWindowIcon(QIcon(':/image/icon.ico'))
+        self.label.setPixmap(QPixmap(":/image/_background.jpg"))
 
     def control_object(self):     #按鈕們
         self.pushButton.clicked.connect(self.play)
