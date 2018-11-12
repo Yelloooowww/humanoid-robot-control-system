@@ -7,11 +7,11 @@
 #include <math.h>
 #include <string.h>
 
-// #define FOSC 11059200// Clock Speed
-// #define BAUD0 9600  //
-// #define BAUD1 115200//UL 115200
-// #define MYUBRR0 FOSC/16/BAUD0-1
-// #define MYUBRR1 FOSC/16/BAUD1-1
+#define FOSC 11059200// Clock Speed
+#define BAUD0 9600  //
+#define BAUD1 115200//UL 115200
+#define MYUBRR0 FOSC/16/BAUD0-1
+#define MYUBRR1 FOSC/16/BAUD1-1
 
 // volatile uint8_t i;
 // volatile char get[100];
@@ -19,6 +19,20 @@ int mode,ID,angle,code;
 int data[100];
 int SDC_data[100];
 char get[100];
+
+
+void USART1_Init( unsigned int ubrr )
+{
+/* Set baud rate */
+UCSR1B|=(1<<TXCIE1);  //致能TX，RX complete interrupt，沒有用到的話，不可以致能
+UBRR1H |= (unsigned char)(ubrr>>8);   //p.362 // fosc = 11.0592MHz，Baud Rate=9600，U2X=0 =>UBRR=71，U2X=1=>UBRR=143
+UBRR1L |= (unsigned char)ubrr;
+/* Enable receiver and transmitter */
+UCSR1B |= (1<<RXEN1)|(1<<TXEN1);    //enables the USARTn Receiver，enables the USARTn Transmitter
+/* Set frame format: 8data, 2stop bit */
+//UCSR1C = (0<<USBS1)|(3<<UCSZ10); //selects the number of stop bits，USBS1=1=> 2 bits
+UCSR1C |= (1<<UPM11)|(0<<UPM10)|(1<<USBS1)|(1<<UCSZ11)|(1<<UCSZ10)|(0<<UCPOL1);//Character Size=8 bits，UCPOL1=上升/下降
+}
 
 void KONDO_data_convert(void)
 {
@@ -232,6 +246,120 @@ void KONDO_SDC_write(void)
 
 }
 
+void KONDO_transmit(int mode){
+  int n = 1;  //於mode 130、131使用的計數用變數
+
+	/*洞洞板重新設定*/
+	DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
+	PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
+
+	PORTB &= ~(1<<PB7);
+	PORTB &= ~(1<<PB5);
+
+  switch (mode) {
+    /*Teaching_mode*/
+		angle=angle*100;
+    case 128:
+      printf("---128---\n");
+      DDRF = 0xFF;
+
+      if(ID > 8){
+        PORTF = 127;
+				while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+        UDR1 = (ID-8)+128;
+      }else{
+        PORTF = 191;
+				while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+        UDR1 = ID+128;
+      }
+        printf("(128)[ID] = %d\n",ID);
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+      UDR1 = angle>>7;
+        printf("(128)[angle_1] = %d\n",angle>>7);
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+      UDR1 = angle&127;
+        printf("(128)[angle_2] = %d\n",angle&127);
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+
+      break;
+
+    /*Play_mode*/
+    case 130:
+      printf("---130---\n");
+      /*判斷左右兩側*/
+      DDRF = 0xFF;
+
+      /*以data[0]決定資料總筆數，換算為姿態數*/
+      for(int i = 0;i < data[0]/17; i++){
+        /*一姿態之資料*/
+        for(int j = 0;j < 17; j++){
+          /*依照順序送至各角度*/
+          if(j > 8){
+            PORTF = 191;
+            UDR1 = (j-8)+128;
+          }else{
+            PORTF = 127;
+            UDR1 = j+128;
+          }
+            printf("(130)[ID] = %d\n",j);
+          while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+          UDR1 = data[n] >> 7;
+            printf("(130)[%d] = %d\n",n,data[n] >> 7);
+          while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+          UDR1 = data[n] & 127;
+            printf("(130)[%d] = %d\n",n,data[n] & 127);
+          while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+          n++;
+        }
+        /*送完一姿態之資料，等待一秒，再繼續下一姿態*/
+        _delay_ms(1000);
+
+      }
+
+      break;
+
+    /*Remote_mode*/
+    case 131:
+      printf("---131---\n");
+      /*判斷左右兩側*/
+      DDRF = 0xFF;
+
+      for(int i = 0;i < SDC_data[0]/17; i++){
+        /*一姿態之資料*/
+        for(int j = 0;j < 17; j++){
+          /*依照順序送至各角度*/
+          if(j > 8){
+            PORTF = 191;
+            UDR1 = (j-8)+128;
+          }else{
+            PORTF = 127;
+            UDR1 = j+128;
+          }
+
+            printf("(131)[ID] = %d\n",j);
+          while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+          UDR1 = SDC_data[n] >> 7;
+            printf("(131)[%d] = %d\n",n,SDC_data[n] >> 7);
+          while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+          UDR1 = SDC_data[n] & 127;
+            printf("(131)[%d] = %d\n",n,SDC_data[n] & 127);
+          while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+          n++;
+        }
+        /*送完一姿態之資料，等待一秒，再繼續下一姿態*/
+        _delay_ms(1000);
+
+      }
+
+      break;
+
+    default:
+      printf("-----ERROR-----\n");
+      break;
+  }
+
+}
+
 
 int main(void)
 {
@@ -239,9 +367,13 @@ int main(void)
   printf("start test Chang\n");
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
-	// PORTB &= ~(1<<PB7);
-	// PORTB &= ~(1<<PB5);
-	// DDRF=0xff;        //用PF1~4控制機器人左右半邊以及要送還是收
+
+	PORTB &= ~(1<<PB7);
+	PORTB &= ~(1<<PB5);
+	DDRF=0xff;        //用PF1~4控制機器人左右半邊以及要送還是收
+	USART1_Init ( MYUBRR1 );
+
+	sei();	// 開啟所有中斷功能
 
   // USART1_Init ( MYUBRR1 );
   // USART0_Init ( MYUBRR0 );
@@ -272,12 +404,14 @@ int main(void)
 			case 128:
 			{
 				KONDO_data_convert();
+				KONDO_transmit(mode);
 				mode=0;
 			}	break;
 
 	  	case 130:
 			{
 				KONDO_data_convert();
+				KONDO_transmit(mode);
 				mode=0;
 			}	break;
 
@@ -285,6 +419,7 @@ int main(void)
 			{
 				KONDO_data_convert();
 				KONDO_SDC_read();
+				KONDO_transmit(mode);
 				mode=0;
 			}	break;
 
@@ -292,6 +427,7 @@ int main(void)
 			{
 				KONDO_data_convert();
 				KONDO_SDC_write();
+				KONDO_transmit(mode);
 				mode=0;
 			}	break;
 
@@ -303,7 +439,7 @@ int main(void)
 		}//switch(mode)
 
 		for (int i = 0; i < 100; i++) {
-			get[i]=0;
+			data[i]=0;
 			SDC_data[i]=0;
 		}
 		code=0;
@@ -319,4 +455,9 @@ int main(void)
 
 
     return 0;
+}
+
+ISR(USART1_TX_vect) {
+	printf("hi\n" );
+
 }
