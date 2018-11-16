@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -1041,11 +1041,12 @@
        <set>QAbstractItemView::NoEditTriggers</set>
       </property>
       <property name="rowCount">
-       <number>17</number>
+       <number>18</number>
       </property>
       <property name="columnCount">
        <number>10</number>
       </property>
+      <row/>
       <row/>
       <row/>
       <row/>

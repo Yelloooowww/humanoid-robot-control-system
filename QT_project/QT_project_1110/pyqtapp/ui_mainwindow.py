@@ -457,7 +457,7 @@ class Ui_MainWindow(object):
         self.tableWidget.setGeometry(QtCore.QRect(0, 0, 591, 511))
         self.tableWidget.setAutoScroll(True)
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.tableWidget.setRowCount(17)
+        self.tableWidget.setRowCount(18)
         self.tableWidget.setColumnCount(10)
         self.tableWidget.setObjectName("tableWidget")
         self.tabWidget.addTab(self.tab_2, "")
@@ -629,7 +629,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         self.horizontalSlider.valueChanged['int'].connect(self.spinBox.setValue)
         self.spinBox.valueChanged['int'].connect(self.horizontalSlider.setValue)
         self.horizontalSlider_1.valueChanged['int'].connect(self.spinBox_1.setValue)
