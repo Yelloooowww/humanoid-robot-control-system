@@ -151,7 +151,7 @@ void Update_accmulate(uint8_t c){  //更新總表
     printf("Have Recorded\n");
   }else if(c==7){//按DEL 清除前一時刻資料
     num_of_active--;
-    accumulate[num_of_active*18-1]=255;//資料結尾
+    if(num_of_active>0) accumulate[num_of_active*18-1]=255;//資料結尾
     for(int i=0;i<=17;i++) accumulate[num_of_active*18+i]=0;
     printf("Have DEL\n");
   }else if(c==8){//按清空
