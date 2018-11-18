@@ -21,8 +21,8 @@ uint8_t mode;//輪循(mode=0:學習,mode=1:控制)
 uint8_t command;//伺服機設定命令
 uint16_t now[17];//當下姿態 (range:3500-11500)
 uint16_t accumulate[200];//準備寫入SDC的資料(和人機上的總表大致相同)(寫入SDC的過程要內插)
-//範例:accumulate[]={36,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,3,7600,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,255}
-//說明: 36:資料長度(18*2);  75.....:該時刻17軸角度資料(range:3500-11500); 3:和下一時刻資料要內插成3個間格 ;255:資料結束(沒有下一時刻了)
+//範例:accumulate[]={7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,3,7600,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,255}
+//說明:7500..:該時刻17軸角度資料(range:3500-11500); 3:和下一時刻資料要內插成3個間格 ;255:資料結束(沒有下一時刻了)
 
 
 void messenger_dealer(){     //訊息交換機MCU
@@ -142,25 +142,23 @@ void ACK( unsigned char data ) //單純的UART1送訊
   ;
 }
 void Update_accmulate(uint8_t c){  //更新總表
+  static uint8_t num_of_active;//紀錄目前有幾個定格姿態
   if(c<=6 && c>=1){ //使用者按紀錄
-    if(c<=5 && c>=1) accumulate[accumulate[0]]=c;//間格
-    for(int i=0;i<17;i++){
-      accumulate[accumulate[0]+1+i]=now[i];
-    }
-    accumulate[accumulate[0]+18]=255;//資料結尾
-    accumulate[0]+=18;
+    if(c<=5 && c>=1)  accumulate[num_of_active*18-1]=c;//間格
+    for(int i=0;i<17;i++) accumulate[num_of_active*18+i]=now[i];
+    accumulate[num_of_active*18+17]=255;//資料結尾
+    num_of_active++;
     printf("Have Recorded\n");
   }else if(c==7){//按DEL 清除前一時刻資料
-    accumulate[0]-=18;
-    for(int i=0;i<=17;i++){
-      accumulate[accumulate[0]+1+i]=0;
-    }
-    accumulate[accumulate[0]]=255;//資料結尾
+    num_of_active--;
+    accumulate[num_of_active*18-1]=255;//資料結尾
+    for(int i=0;i<=17;i++) accumulate[num_of_active*18+i]=0;
     printf("Have DEL\n");
   }else if(c==8){//按清空
-    uint8_t tmp=accumulate[0];
-    for(int i=0;i<=tmp;i++) accumulate[i]=0;
+    for(int i=0;i<=(num_of_active*18-1);i++) accumulate[i]=0;
+    num_of_active=0;
   }
+  printf("num_of_active=%d\n",num_of_active );
   for(int i=0; i<60 ;i++) printf("acc[%d]=%d\n",i,accumulate[i] );
 }
 
