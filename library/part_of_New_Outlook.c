@@ -1,4 +1,5 @@
 //模擬程式:學習mode 總表紀錄,清空,刪除 完成 人機已更新測試正常
+//now[] 和accumulate[] 資料range:3500-11500
 #include "ASA_Lib.h"
 #include <avr/interrupt.h>
 #include <math.h>
@@ -18,10 +19,10 @@ state now_state;
 
 uint8_t mode;//輪循(mode=0:學習,mode=1:控制)
 uint8_t command;//伺服機設定命令
-uint8_t now[17];//姿態FIFO
-uint8_t accumulate[200];//準備寫入SDC的資料(和人機上的總表大致相同)(寫入SDC的過程要內插)
-//範例:accumulate[]={36,75,75,75,75,75,75,75,75,75,75,75,75,75,75,75,75,75,3,76,75,75,75,75,75,75,75,75,75,75,75,75,75,75,75,75,255}
-//說明: 36:資料長度(18*2);  75.....:該時刻17軸角度資料; 3:和下一時刻資料要內插成3個間格 ;255:資料結束(沒有下一時刻了)
+uint16_t now[17];//當下姿態 (range:3500-11500)
+uint16_t accumulate[200];//準備寫入SDC的資料(和人機上的總表大致相同)(寫入SDC的過程要內插)
+//範例:accumulate[]={36,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,3,7600,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,255}
+//說明: 36:資料長度(18*2);  75.....:該時刻17軸角度資料(range:3500-11500); 3:和下一時刻資料要內插成3個間格 ;255:資料結束(沒有下一時刻了)
 
 
 void messenger_dealer(){     //訊息交換機MCU
@@ -124,7 +125,7 @@ void robot_gesture_player(){//機器人姿態播放器
       uint8_t ID=angle_FIFO.container[0][angle_FIFO.index_end];
       uint8_t a=angle_FIFO.container[1][angle_FIFO.index_end];
       printf("ID=%d to angle=%d\n",ID,a );
-      now[ID]=a;
+      now[ID]=a*100;
       printf("now[]= " );
       for(int i=0;i<17;i++) printf("%d ;",now[i]);
       printf("\n" );
@@ -170,7 +171,9 @@ void command_processor(uint8_t c){//監控命令處理器
         Update_accmulate(c); //更新總表
         command=0;//處理完命令把command歸零
       }else if(c==9){//按試播
-        ;
+        printf("This function is in preparation\n" );
+        ACK(130);//模擬一下可以ack的情形
+        command=0;//處理完命令把command歸零
       }
 
 
