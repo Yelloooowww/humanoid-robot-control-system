@@ -1,4 +1,4 @@
-//測試完成 11/19 02:01
+//測試完成 11/19 11:20
 //功能1:讀取資料，插值，存入SD卡
 //功能1:讀取SD卡中的資料，放進KONDO_SDC_FIFO[]，利用中斷去將KONDO_SDC_FIFO[]中的資料讀出，並以每次17筆的方式更新Now[]
 #include "ASA_Lib.h"
@@ -57,6 +57,7 @@ void KONDO_data_convert(void)
 
 		case 131:
 			{
+				printf("get[1]=%d\n",get[1] );
 				code=get[1];
 				printf("code=%d\n",code );
 			}
@@ -65,6 +66,7 @@ void KONDO_data_convert(void)
 		case 132:
 			{
 				code=get[1];
+				printf("get[1]=%d\n",get[1] );
 				printf("code=%d\n",code );
 			}
 			break;
@@ -76,6 +78,7 @@ void KONDO_data_convert(void)
 void KONDO_SDC_read(void)
 {
 	printf("start read\n" );
+	printf("KONDO_SDC_read  code=%d\n",code );
 	char name[4];
   switch (code) {
  	 case 1:sprintf(name,"%.4s","SDC1");break;
@@ -89,12 +92,12 @@ void KONDO_SDC_read(void)
  	 default:sprintf(name,"%.4s","SDC8");break;
   }
 
-  static unsigned char ASA_ID = 4;
-  static uint8_t swap_buffer[10];// 宣告 與SDC00交換資料的資料陣列緩衝區
- 	static unsigned int temp[10];//陣列緩衝區
- 	static int z=0;
-	static int ack=0;
-	static int i=0;
+  unsigned char ASA_ID = 4;
+  uint8_t swap_buffer[10];// 宣告 與SDC00交換資料的資料陣列緩衝區
+ 	unsigned int temp[10];//陣列緩衝區
+ 	// int z=0;
+	int ack=0;
+	int i=0;
 	SDC_data[0]=0;
 
  	char check = 0;	// module communication result state flag
@@ -111,6 +114,7 @@ void KONDO_SDC_read(void)
 
 	while(ack!=35)     //若資料不為#，則持續執行
 	{
+		// printf("ackackackackackackackackackackack\n" );
 		ack=0;
 
 		SDC_FIFO_rear=(SDC_FIFO_rear+1) % SDC_FIFO_max; //第一次進來，SDC_FIFO_rear=0;第二次進來，SDC_FIFO_rear=1....
@@ -157,16 +161,25 @@ void KONDO_SDC_read(void)
 						}
 					}
 					for(int j=0 ; j<i ; j++)
-					{SDC_data[z]=SDC_data[z]+temp[j];}   //產生最終資料SDC_data
+					{SDC_data[0]=SDC_data[0]+temp[j];}   //產生最終資料SDC_data
 					// printf("SDC_data[%d]=%d\n",z,SDC_data[z] );
 				}//if(ack==32)
 			}//while (ack!=32)
 
 	    // printf("get one item: ");
-	    KONDO_SDC_FIFO[SDC_FIFO_rear]=SDC_data[z];
+			if(ack!=35)
+	    {KONDO_SDC_FIFO[SDC_FIFO_rear]=SDC_data[0];}
+
+			if(ack==35)
+			{
+				if(SDC_FIFO_rear==0)
+				{SDC_FIFO_rear=9;}
+				else
+				{SDC_FIFO_rear=SDC_FIFO_rear-1;}
+			}
 			// printf("%d\n",KONDO_SDC_FIFO[SDC_FIFO_rear] );
 
-			SDC_data[z]=0;
+			SDC_data[0]=0;
 			for(int j=0 ; j<10 ; j++)//清空緩衝器
 			{
 				swap_buffer[j]=0;
@@ -216,7 +229,7 @@ void KONDO_SDC_write(void)
 	while (1)
 	{
 		int j=0;
-		for (int i=(count*18+2) ; i<(count*18+38) ; i++) //將36筆資料丟入緩衝器1
+		for (int i=(count*18+2) ; i<(count*18+38) ; i++) //將36筆資料丟入緩衝器1，for (int i=(count*18) ; i<(count*18+36) ; i++) //將36筆資料丟入緩衝器1
 		{
 			temp[j]=get[i];
 			printf("temp[%d]=%d\n",j,temp[j]);
@@ -321,8 +334,10 @@ void robot_gesture_player(void){//機器人姿態播放器
 	{printf("Queue is empty\n" );}
 	else
 	{
+		// printf("SDC_FIFO_front=%d\n",SDC_FIFO_front );
 		SDC_FIFO_front=(SDC_FIFO_front+1)%SDC_FIFO_max;   //第一次進來，front=0;第二次進來，front=1....
 		temp[ppp]=KONDO_SDC_FIFO[SDC_FIFO_front];
+		printf("temp[%d]=%d\n",ppp,temp[ppp] );
 		// for (int i=0 ; i<17 ; i++) {
 		// 	printf("item: temp[%d]=%d\n",i,temp[i] );
 		// }
@@ -336,6 +351,8 @@ void robot_gesture_player(void){//機器人姿態播放器
 				printf("item: Now[%d]=%d\n",i,Now[i] );
 			}
 			ppp=0;
+			printf("ppp=%d\n",ppp );
+			_delay_ms(100);
 		}
 	}
 
@@ -360,6 +377,7 @@ int main(void)
 
 
 	while (1) {
+		printf("hi~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 		TCCR2|=(1<<WGM21);  //CTC Mode
 	  TCCR2|=(1<<CS21)|(1<<CS20); //clkI/O/64 (From prescaler)
 	  TIMSK|=(1<<OCIE2);
@@ -384,26 +402,35 @@ int main(void)
 		// for (int i=0; i<num; i++) {
 		// 	printf("get[%d]=%d\n",i,get[i] );
 		// }
-		int h;
+		static int h;
 		printf("hi=");
 		scanf("%d",&h );
-		if(h==1)
-		{
-			get[0]=131;
-			get[1]=2;
+		printf("h=%d!!!!!!!!!!!!!!!!!!\n",h );
+		switch (h) {
+			case 1:
+			{
+				get[0]=131;
+				get[1]=2;
+				code=2;
+			}
+			break;
+
+			case 2:
+			{
+				get[0]=132;
+				get[1]=2;
+				code=2;
+				for (int i = 2; i < 19; i++) {
+					get[i]=i+2+7500;
+					get[18+i]=i-1+7500;
+				}
+				get[19]=2;
+				get[37]=255;
+			}
+			break;
 		}
 
-		else if(h==2)
-		{
-			get[0]=132;
-			get[1]=2;
-			for (int i = 2; i < 19; i++) {
-				get[i]=i+2+7500;
-				get[18+i]=i-1+7500;
-			}
-			get[19]=2;
-			get[37]=255;
-		}
+
 
 		mode=get[0];
 		printf("mode=%d\n",mode );
@@ -412,27 +439,47 @@ int main(void)
 			case 128:
 			{
 				KONDO_data_convert();
+				h=0;
 				mode=0;
+				for (int i=0; i<100; i++) {
+					get[i]=0;
+				}
 			}	break;
 
 	  	case 130:
 			{
 				KONDO_data_convert();
+				h=0;
 				mode=0;
+				for (int i=0; i<100; i++) {
+					get[i]=0;
+				}
 			}	break;
 
 	  	case 131:
 			{
 				KONDO_data_convert();
+				_delay_ms(100);
 				KONDO_SDC_read();
-				mode=0;
+				_delay_ms(500);
+				// h=0;
+				// mode=0;
+				// for (int i=0; i<100; i++) {
+				// 	get[i]=0;
+				// }
 			}	break;
 
 	  	case 132:
 			{
 				KONDO_data_convert();
+				_delay_ms(100);
 				KONDO_SDC_write();
-				mode=0;
+				_delay_ms(500);
+				// h=0;
+				// mode=0;
+				// for (int i=0; i<100; i++) {
+				// 	get[i]=0;
+				// }
 			}	break;
 
 	  	default:
@@ -446,13 +493,13 @@ int main(void)
 			get[i]=0;
 			SDC_data[i]=0;
 		}
-		code=0;
+
 		// num=0;
-		h=0;
-		mode=0;
-		for (int i=0; i<100; i++) {
-			get[i]=0;
-		}
+		// h=0;
+		// mode=0;
+		// for (int i=0; i<100; i++) {
+		// 	get[i]=0;
+		// }
 
 
 
