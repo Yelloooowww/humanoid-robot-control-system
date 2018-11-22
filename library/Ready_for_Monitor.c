@@ -35,14 +35,41 @@ uint16_t accumulate[200];//準備寫入SDC的資料(和人機上的總表大致�
 
 void KONDO_SDC_write(uint8_t code);
 void KONDO_SDC_write(uint8_t code);
+// Internal functions declare
+static int stdio_putchar(char c, FILE *stream);
+static int stdio_getchar(FILE *stream);
+
+// Internal variables declare
+static FILE STDIO_BUFFER = FDEV_SETUP_STREAM(stdio_putchar, stdio_getchar, _FDEV_SETUP_RW);
+
+static int stdio_putchar(char c, FILE *stream) {
+    if (c == '\n')
+        stdio_putchar('\r',stream);
+    while((UCSR0A&(1<<UDRE0))==0)
+        ;
+    UDR0 = c;
+
+    return 0;
+}
+
+static int stdio_getchar(FILE *stream) {
+	int UDR_Buff;
+    while((UCSR0A&(1<<RXC0))==0)
+        ;
+	UDR_Buff = UDR0;
+	stdio_putchar(UDR_Buff,stream);
+
+	return UDR_Buff;
+}
+
 
 void messenger_dealer(){     //訊息交換機MCU
 
   if((g[0]|g[1])!=0 && g[2]==0){
     mode=0;//進入學習模式
     while ((angle_FIFO.index_start+1)%10 == angle_FIFO.index_end) {
-      // printf("FIFO is FULL\n" );
-      char p[]="FIFO_FULL";my_printf(&p);
+      printf("FIFO is FULL\n" );
+      // char p[]="FIFO_FULL";my_printf(&p);
     }
     //存入FIFO
     // printf("ADD to FIFO\n" );
@@ -53,8 +80,8 @@ void messenger_dealer(){     //訊息交換機MCU
     mode=1;//進入控制模式
     command=g[2];
     // printf("command=%d~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",command );
-    // printf("ENTER Control Mode\n" );
-    char p[]="EnterMode1";my_printf(&p);
+    printf("ENTER Control Mode\n" );
+    // char p[]="EnterMode1";my_printf(&p);
   }
 }
 void my_decoder(uint8_t u){
@@ -129,6 +156,9 @@ void USART_Init( unsigned int ubrr )
   UCSR0B &= (~(1<<UCSZ02));//8-bit: UCSZn2=0,UCSZn1=1,UCSZn0=1
   UCSR0C |=(1<<UCSZ01)|(1<<UCSZ10);
   UCSR0C &= (~(1<<USBS0));//stopbit=1
+  stdout = &STDIO_BUFFER;
+	stdin = &STDIO_BUFFER;
+
 
   // UBRR1H |= (unsigned char)(ubrr>>8);
   // UBRR1L |= (unsigned char)ubrr;
@@ -198,14 +228,14 @@ void Update_accmulate(uint8_t c){  //更新總表
     for(int i=0;i<17;i++) accumulate[num_of_active*18+i]=now[i];
     accumulate[num_of_active*18+17]=255;//資料結尾
     num_of_active++;
-    // printf("Have Recorded\n");
-    char p[]="HaveRecorded";my_printf(&p);
+    printf("Have Recorded\n");
+    // char p[]="HaveRecorded";my_printf(&p);
   }else if(c==7){//按DEL 清除前一時刻資料
     num_of_active--;
     if(num_of_active>0) accumulate[num_of_active*18-1]=255;//資料結尾
     for(int i=0;i<=17;i++) accumulate[num_of_active*18+i]=0;
-    // printf("Have DEL\n");
-    char p[]="HaveDEL";my_printf(&p);
+    printf("Have DEL\n");
+    // char p[]="HaveDEL";my_printf(&p);
   }else if(c==8){//按清空
     for(int i=0;i<=(num_of_active*18-1);i++) accumulate[i]=0;
     num_of_active=0;
@@ -216,8 +246,8 @@ void Update_accmulate(uint8_t c){  //更新總表
 
 void KONDO_SDC_read(uint8_t code)
 {
-	// printf("start read\n" );
-  char p[]="StartRead";my_printf(&p);
+	printf("start read\n" );
+  // char p[]="StartRead";my_printf(&p);
   _delay_ms(500);
 	char name[4];
   switch (code) {
@@ -323,8 +353,8 @@ void KONDO_SDC_read(uint8_t code)
 	// Configure to close file mode
   Setting = 0x00;
   check = ASA_SDC00_set(ASA_ID, 200, Mask, Shift, Setting);// 送出旗標組合
-	// printf("close the file\n" );
-  char p1[]="CloseFile";my_printf(&p1);
+	printf("close the file\n" );
+  // char p1[]="CloseFile";my_printf(&p1);
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
 
@@ -340,8 +370,8 @@ void KONDO_SDC_read(uint8_t code)
 
 void KONDO_SDC_write(uint8_t code)
 {
-  // printf("START　write\n" );
-  char p[]="StartWrite";my_printf(&p);
+  printf("START　write\n" );
+  // char p[]="StartWrite";my_printf(&p);
   _delay_ms(500);
 	char name[4];
 	uint8_t a[10];
@@ -387,8 +417,8 @@ void KONDO_SDC_write(uint8_t code)
 			{
 				if( a[m] == '\0' )
 				{
-					// printf("null\n" );
-          char p[]="NULL";my_printf(&p);
+					printf("null\n" );
+          // char p[]="NULL";my_printf(&p);
 					sizeof_string = m;
 					break;
 				}
@@ -424,8 +454,8 @@ void KONDO_SDC_write(uint8_t code)
 				{
 					if( a[m] == '\0' )
 					{
-						// printf("null\n" );
-            char p[]="NULL";my_printf(&p);
+						printf("null\n" );
+            // char p[]="NULL";my_printf(&p);
 						sizeof_string = m;
 						break;
 					}
@@ -453,8 +483,8 @@ void KONDO_SDC_write(uint8_t code)
 		{
 			if( a[m] == '\0' )
 			{
-				// printf("null\n" );
-        char p[]="NULL";my_printf(&p);
+				printf("null\n" );
+        // char p[]="NULL";my_printf(&p);
 				sizeof_string = m;
 				break;
 			}
@@ -464,8 +494,8 @@ void KONDO_SDC_write(uint8_t code)
 
 	ASA_SDC00_set(ASA_ID,200,0x01,0,0x00);  //關檔
 	// printf("mode132 done\n" );
-  // printf("Have writen~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-  char p1[]="HaveWriten";my_printf(&p1);
+  printf("Have writen~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+  // char p1[]="HaveWriten";my_printf(&p1);
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
 
@@ -498,16 +528,16 @@ void command_processor(uint8_t c){//監控命令處理器
       KONDO_SDC_write(c);
       command=0;
       ACK(132);
-      char p[]="HaveACK132";my_printf(&p);
-      // printf("Have ACK132~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+      // char p[]="HaveACK132";my_printf(&p);
+      printf("Have ACK132~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
     }else if(c<=28 && c>=21){//SDC資料播放相關命令
       // printf("(c<=28 && c>=21)\n" );
       KONDO_SDC_read(c);
       command=0;
 
       ACK(131);
-      // printf("Have ACK131\n" );
-      char p[]="HaveACK131";my_printf(&p);
+      printf("Have ACK131\n" );
+      // char p[]="HaveACK131";my_printf(&p);
     }
   }
 }
@@ -582,6 +612,7 @@ int main(){
   USART1_Init(  FOSC/16/115200-1 );//KONDO
   sei();
   char p[]="START";my_printf(&p);
+  printf("SSSTTTAAARRRTTT\n");
   while (1) {
         command_processor(command);//監控命令處理器
       }
