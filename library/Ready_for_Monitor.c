@@ -1,15 +1,12 @@
+//printf可以於人機上的monitor對話窗中顯示 盡量一次20個字看得比較清楚
 #include "ASA_Lib.h"
 #include <avr/interrupt.h>
 #include <math.h>
 #include <string.h>
 #define FOSC 11059200// Clock Speed
-#define BAUD1 9600//(暫時改回來)
-#define MYUBRR1 (FOSC/16/BAUD1-1)
-volatile uint8_t g[3];
+volatile uint8_t g[3];//解包前用的
 
 unsigned int SDC_data[10];//for FIFO
-// unsigned int get[100];
-
 unsigned int KONDO_SDC_FIFO[10];//for FIFO，需小於最小檔案之資料量
 unsigned int SDC_FIFO_max=10;//for FIFO
 unsigned int SDC_FIFO_rear=9;//for FIFO
@@ -35,33 +32,27 @@ uint16_t accumulate[200];//準備寫入SDC的資料(和人機上的總表大致�
 
 void KONDO_SDC_write(uint8_t code);
 void KONDO_SDC_write(uint8_t code);
-// Internal functions declare
+// Internal functions declare~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 static int stdio_putchar(char c, FILE *stream);
 static int stdio_getchar(FILE *stream);
-
-// Internal variables declare
 static FILE STDIO_BUFFER = FDEV_SETUP_STREAM(stdio_putchar, stdio_getchar, _FDEV_SETUP_RW);
-
 static int stdio_putchar(char c, FILE *stream) {
     if (c == '\n')
         stdio_putchar('\r',stream);
     while((UCSR0A&(1<<UDRE0))==0)
         ;
     UDR0 = c;
-
     return 0;
 }
-
 static int stdio_getchar(FILE *stream) {
 	int UDR_Buff;
     while((UCSR0A&(1<<RXC0))==0)
         ;
 	UDR_Buff = UDR0;
 	stdio_putchar(UDR_Buff,stream);
-
 	return UDR_Buff;
 }
-
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void messenger_dealer(){     //訊息交換機MCU
 
@@ -244,30 +235,31 @@ void Update_accmulate(uint8_t c){  //更新總表
   // for(int i=0; i<60 ;i++) printf("acc[%d]=%d\n",i,accumulate[i] );
 }
 
+
+
 void KONDO_SDC_read(uint8_t code)
 {
-	printf("start read\n" );
-  // char p[]="StartRead";my_printf(&p);
-  _delay_ms(500);
+	printf("start_read~~~~~~~~~\n" );
+	printf("KONDO_SDC_read__c=%d\n",code );
 	char name[4];
   switch (code) {
- 	 case 21:sprintf(name,"%.4s","SDC1");break;
- 	 case 22:sprintf(name,"%.4s","SDC2");break;
- 	 case 23:sprintf(name,"%.4s","SDC3");break;
- 	 case 24:sprintf(name,"%.4s","SDC4");break;
- 	 case 25:sprintf(name,"%.4s","SDC5");break;
- 	 case 26:sprintf(name,"%.4s","SDC6");break;
- 	 case 27:sprintf(name,"%.4s","SDC7");break;
- 	 case 28:sprintf(name,"%.4s","SDC8");break;
+ 	 case 1:sprintf(name,"%.4s","SDC1");break;
+ 	 case 2:sprintf(name,"%.4s","SDC2");break;
+ 	 case 3:sprintf(name,"%.4s","SDC3");break;
+ 	 case 4:sprintf(name,"%.4s","SDC4");break;
+ 	 case 5:sprintf(name,"%.4s","SDC5");break;
+ 	 case 6:sprintf(name,"%.4s","SDC6");break;
+ 	 case 7:sprintf(name,"%.4s","SDC7");break;
+ 	 case 8:sprintf(name,"%.4s","SDC8");break;
  	 default:sprintf(name,"%.4s","SDC8");break;
   }
 
-  static unsigned char ASA_ID = 4;
-  static uint8_t swap_buffer[10];// 宣告 與SDC00交換資料的資料陣列緩衝區
- 	static unsigned int temp[10];//陣列緩衝區
- 	static int z=0;
-	static int ack=0;
-	static int i=0;
+  unsigned char ASA_ID = 4;
+  uint8_t swap_buffer[10];// 宣告 與SDC00交換資料的資料陣列緩衝區
+ 	unsigned int temp[10];//陣列緩衝區
+ 	// int z=0;
+	int ack=0;
+	int i=0;
 	SDC_data[0]=0;
 
  	char check = 0;	// module communication result state flag
@@ -284,6 +276,7 @@ void KONDO_SDC_read(uint8_t code)
 
 	while(ack!=35)     //若資料不為#，則持續執行
 	{
+		// printf("ackackackackackackackackackackack\n" );
 		ack=0;
 
 		SDC_FIFO_rear=(SDC_FIFO_rear+1) % SDC_FIFO_max; //第一次進來，SDC_FIFO_rear=0;第二次進來，SDC_FIFO_rear=1....
@@ -301,9 +294,9 @@ void KONDO_SDC_read(uint8_t code)
     {
 			while (ack!=32)
 			{
-				// printf("start get\n" );
+				printf("start_get__________\n" );
 				ASA_SDC00_get(ASA_ID, 0, 1, &swap_buffer[i]);//從SD卡中取出1 Byte資料
-				// printf("swap_buffer[%d]=%d\n",i,swap_buffer[i] );
+				printf("swap_buffer[%d]=%d___\n",i,swap_buffer[i] );
 				ack=swap_buffer[i];
 				if(ack==35)
 				{break;}
@@ -321,7 +314,7 @@ void KONDO_SDC_read(uint8_t code)
 							temp[j]=swap_buffer[j]-48;
 							for(int k=0 ; k<(i-j-1) ; k++)
 							{temp[j]=temp[j]*10;}
-							// printf("data[%d]=%d\n",j,data[j] );
+							// printf("data[%d]=%d~~~~~~~~~~\n",j,data[j] );
 						}
 						else if(swap_buffer[j]==13 || swap_buffer[j]==10)
 						{
@@ -330,16 +323,25 @@ void KONDO_SDC_read(uint8_t code)
 						}
 					}
 					for(int j=0 ; j<i ; j++)
-					{SDC_data[z]=SDC_data[z]+temp[j];}   //產生最終資料SDC_data
-					// printf("SDC_data[%d]=%d\n",z,SDC_data[z] );
+					{SDC_data[0]=SDC_data[0]+temp[j];}   //產生最終資料SDC_data
+					// printf("SDC_data[%d]=%d~~~~~~\n",z,SDC_data[z] );
 				}//if(ack==32)
 			}//while (ack!=32)
 
 	    // printf("get one item: ");
-	    KONDO_SDC_FIFO[SDC_FIFO_rear]=SDC_data[z];
+			if(ack!=35)
+	    {KONDO_SDC_FIFO[SDC_FIFO_rear]=SDC_data[0];}
+
+			if(ack==35)
+			{
+				if(SDC_FIFO_rear==0)
+				{SDC_FIFO_rear=9;}
+				else
+				{SDC_FIFO_rear=SDC_FIFO_rear-1;}
+			}
 			// printf("%d\n",KONDO_SDC_FIFO[SDC_FIFO_rear] );
 
-			SDC_data[z]=0;
+			SDC_data[0]=0;
 			for(int j=0 ; j<10 ; j++)//清空緩衝器
 			{
 				swap_buffer[j]=0;
@@ -353,14 +355,11 @@ void KONDO_SDC_read(uint8_t code)
 	// Configure to close file mode
   Setting = 0x00;
   check = ASA_SDC00_set(ASA_ID, 200, Mask, Shift, Setting);// 送出旗標組合
-	printf("close the file\n" );
-  // char p1[]="CloseFile";my_printf(&p1);
+	printf("close_the_file_____\n" );
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
-
-  PORTB &= ~(1<<PB7);
+	PORTB &= ~(1<<PB7);
   PORTB &= ~(1<<PB5);
-
 	// for(int j=0 ; j<z ; j++)
 	// printf("SDC_data[%d]=%d\n",j,SDC_data[j] );
 }//KONDO_SDC_read
@@ -370,9 +369,6 @@ void KONDO_SDC_read(uint8_t code)
 
 void KONDO_SDC_write(uint8_t code)
 {
-  printf("START　write\n" );
-  // char p[]="StartWrite";my_printf(&p);
-  _delay_ms(500);
 	char name[4];
 	uint8_t a[10];
 	unsigned int temp[36];
@@ -381,14 +377,14 @@ void KONDO_SDC_write(uint8_t code)
 	int num=0;//插入數目
 	int count=0;
   switch (code) {
- 	 case 11:sprintf(name,"%.4s","SDC1");break;
- 	 case 12:sprintf(name,"%.4s","SDC2");break;
- 	 case 13:sprintf(name,"%.4s","SDC3");break;
- 	 case 14:sprintf(name,"%.4s","SDC4");break;
- 	 case 15:sprintf(name,"%.4s","SDC5");break;
- 	 case 16:sprintf(name,"%.4s","SDC6");break;
- 	 case 17:sprintf(name,"%.4s","SDC7");break;
- 	 case 18:sprintf(name,"%.4s","SDC8");break;
+ 	 case 1:sprintf(name,"%.4s","SDC1");break;
+ 	 case 2:sprintf(name,"%.4s","SDC2");break;
+ 	 case 3:sprintf(name,"%.4s","SDC3");break;
+ 	 case 4:sprintf(name,"%.4s","SDC4");break;
+ 	 case 5:sprintf(name,"%.4s","SDC5");break;
+ 	 case 6:sprintf(name,"%.4s","SDC6");break;
+ 	 case 7:sprintf(name,"%.4s","SDC7");break;
+ 	 case 8:sprintf(name,"%.4s","SDC8");break;
  	 default:sprintf(name,"%.4s","SDC8");break;
   }
 	unsigned char ASA_ID = 4;
@@ -399,10 +395,10 @@ void KONDO_SDC_write(uint8_t code)
 	while (1)
 	{
 		int j=0;
-		for (int i=(count*18) ; i<(count*18+36) ; i++) //將36筆資料丟入緩衝器1
+		for (int i=(count*18+2) ; i<(count*18+38) ; i++) //將36筆資料丟入緩衝器1，for (int i=(count*18) ; i<(count*18+36) ; i++) //將36筆資料丟入緩衝器1
 		{
 			temp[j]=accumulate[i];
-			// printf("temp[%d]=%d\n",j,temp[j]);
+			printf("temp[%d]=%d\n",j,temp[j]);
 			j++;
 		}
 
@@ -418,7 +414,6 @@ void KONDO_SDC_write(uint8_t code)
 				if( a[m] == '\0' )
 				{
 					printf("null\n" );
-          // char p[]="NULL";my_printf(&p);
 					sizeof_string = m;
 					break;
 				}
@@ -427,7 +422,7 @@ void KONDO_SDC_write(uint8_t code)
 		}
 
 		num=temp[17];//決定插入數目
-		// printf("num=%d\n",num );
+		printf("num=%d\n",num );
 
 		for (int i=0; i<17; i++)
 		{gap[i]=abs(temp[i+18]-temp[i])/(num+1);}//間隔=(get[n+18]-get[n])/(插入數目+1)
@@ -442,7 +437,7 @@ void KONDO_SDC_write(uint8_t code)
 				{swap_buffer[k]=temp[k]-(i+1)*abs(temp[k+18]-temp[k])/(num+1);}
 
 
-				// printf("swap_buffer[%d]=%d\n",k,swap_buffer[k] );
+				printf("swap_buffer[%d]=%d\n",k,swap_buffer[k] );
 
 				if(k==16)
 				{sprintf(a,"%d \r\n",swap_buffer[k]);}
@@ -455,7 +450,6 @@ void KONDO_SDC_write(uint8_t code)
 					if( a[m] == '\0' )
 					{
 						printf("null\n" );
-            // char p[]="NULL";my_printf(&p);
 						sizeof_string = m;
 						break;
 					}
@@ -484,7 +478,6 @@ void KONDO_SDC_write(uint8_t code)
 			if( a[m] == '\0' )
 			{
 				printf("null\n" );
-        // char p[]="NULL";my_printf(&p);
 				sizeof_string = m;
 				break;
 			}
@@ -493,16 +486,16 @@ void KONDO_SDC_write(uint8_t code)
 	}
 
 	ASA_SDC00_set(ASA_ID,200,0x01,0,0x00);  //關檔
-	// printf("mode132 done\n" );
-  printf("Have writen~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-  // char p1[]="HaveWriten";my_printf(&p1);
+	printf("mode132 done\n" );
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
-
 	PORTB &= ~(1<<PB7);
   PORTB &= ~(1<<PB5);
 
 }//KONDO_SDC_write
+
+
+
 
 
 
@@ -524,19 +517,19 @@ void command_processor(uint8_t c){//監控命令處理器
       // }
 
     if(c<=18 && c>=11){//SDC寫入相關命令
-      // printf("(c<=18 && c>=11)\n" );
-      KONDO_SDC_write(c);
+      printf("(c<=18_&&_c>=11)~~~\n" );
+      KONDO_SDC_write(c-10);
       command=0;
       ACK(132);
       // char p[]="HaveACK132";my_printf(&p);
-      printf("Have ACK132~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+      printf("HaveACK132~~~~~~~~~\n" );
     }else if(c<=28 && c>=21){//SDC資料播放相關命令
-      // printf("(c<=28 && c>=21)\n" );
-      KONDO_SDC_read(c);
+      printf("(c<=28_&&_c>=21)~~~\n" );
+      KONDO_SDC_read(c-20);
       command=0;
 
       ACK(131);
-      printf("Have ACK131\n" );
+      printf("HaveACK131~~~~~~~~~\n" );
       // char p[]="HaveACK131";my_printf(&p);
     }
   }
@@ -588,31 +581,26 @@ void KONDO_transmit(){
       while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
       UDR1 = now[i]&127;
     }
-
   }
-
 }
-void my_printf(char* Data_p){
-  for(int i=0;i<19;i++) {
-    ACK(((char*)Data_p)[i]);
-  }
-  ACK(0xee);
-}
-int main(){
-  // ASA_M128_set();
-  // printf("START\n" );
+void Timer2_INIT(){
   TCCR2|=(1<<WGM21);  //CTC Mode
 	TCCR2|=(1<<CS21)|(1<<CS20); //clkI/O/64 (From prescaler)
 	TIMSK|=(1<<OCIE2);
 	OCR2=171;
+}
+int main(){
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
-  PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2
-    DDRF=0xff;
-  USART_Init( FOSC/16/9600-1);//BlueTooth
+  PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
+	PORTB &= ~(1<<PB7);
+  PORTB &= ~(1<<PB5);
+  DDRF=0xff;
+  Timer2_INIT();
+  USART_Init( FOSC/16/115200-1);//BlueTooth BAUDRATE已改
   USART1_Init(  FOSC/16/115200-1 );//KONDO
   sei();
-  char p[]="START";my_printf(&p);
-  printf("SSSTTTAAARRRTTT\n");
+  for(int i=0;i<20;i++) ACK(65+i);   //只是monitor測試
+  printf("START~~~~~~~~~~~~~\n");
   while (1) {
         command_processor(command);//監控命令處理器
       }
