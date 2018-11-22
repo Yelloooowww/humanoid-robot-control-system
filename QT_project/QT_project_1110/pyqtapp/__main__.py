@@ -2,8 +2,10 @@ import sys
 import time
 import serial
 import functools
+from pyqtapp.ui_monitor import Ui_Monitor_Dialog
 from pyqtapp.ui_mainwindow import Ui_MainWindow
 from pyqtapp.ui_remote_control_dialog import Ui_Dialog
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -14,6 +16,7 @@ from pyqtapp import images_rc
 ser = serial.Serial()
 ser.baudrate = 9600
 ser.timeout=1000
+
 
 
 class RemoteControl(QDialog, Ui_Dialog):    #遙控器對話窗
@@ -46,11 +49,35 @@ class GetAck(QThread):     #這是ack
         print('get ack=',get)
         self.AAACCCKKK.emit(get) #收到M128端的回應後發射訊號
 
+class Monitor(QThread):
+    WantToPrint=pyqtSignal(str)
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.text=[]
+    def run(self):
+        while 1:
+            self.text=ser.read(20)
+            self.WantToPrint.emit(str(self.text))
+            self.text =[]
+
+
+
+class Monitor_DIA(QDialog, Ui_Monitor_Dialog):
+    def __init__(self, parent=None):
+        super(Monitor_DIA, self).__init__(parent)
+        self.setupUi(self)
+        self.setWindowTitle('Monitor')
+        self.mmmonitor=Monitor()
+        self.mmmonitor.WantToPrint.connect(self.showtext)
+        self.mmmonitor.start()
+    def showtext(self,value):
+        self.textBrowser.append(str(value))
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
+
         self.RC_control=RemoteControl()
         self.RC_control.YouPress.connect(self.SimulateRemoteControl)
         self.ack=GetAck()
@@ -64,11 +91,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.vision_effect()
         self.control_object()
         self.total_table_set()
-
-
-
         self.spinBox_11.setEnabled(False) #紅色4號殘障了QQ
         self.horizontalSlider_11.setEnabled(False) #紅色4號殘障了QQ
+        self.monitor_dia= Monitor_DIA()
+        self.monitor_dia.show()
 
     def setting(self):     #通訊埠設定
         items = listports()
