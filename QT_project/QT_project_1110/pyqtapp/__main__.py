@@ -14,7 +14,7 @@ from pyqtapp import images_rc
 
 
 ser = serial.Serial()
-ser.baudrate = 9600
+ser.baudrate = 115200
 ser.timeout=1000
 
 
