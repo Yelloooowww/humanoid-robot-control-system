@@ -1,35 +1,22 @@
-//模擬程式:學習mode 總表紀錄,清空,刪除 完成 人機已更新測試正常
-//now[] 和accumulate[] 資料range:3500-11500
-//1119模擬測試成功
+// 11/23 大致算測試成功@@
+// 1.學習mode正常 可是有某幾軸不太聽話(黃色)
+// 2.SDC部分尚未改成 SDC_interrupt裡的版本 暫時遇到的問題有
+// write正常 只是有的時候好像會跳進一個迴圈出不來(貌似跟資料筆數有關?)
+// 播放功能正常只是要等很久
+
 #include "ASA_Lib.h"
 #include <avr/interrupt.h>
 #include <math.h>
 #include <string.h>
 #define FOSC 11059200// Clock Speed
-#define BAUD1 9600//(暫時改回來)
-#define MYUBRR1 (FOSC/16/BAUD1-1)
-volatile uint8_t g[3];
-unsigned int why;
-
+volatile uint8_t g[3];//解包前用的
 unsigned int SDC_data[10];//for FIFO
-// unsigned int get[100];
-
 unsigned int KONDO_SDC_FIFO[10];//for FIFO，需小於最小檔案之資料量
 unsigned int SDC_FIFO_max=10;//for FIFO
 unsigned int SDC_FIFO_rear=9;//for FIFO
 unsigned int SDC_FIFO_front=9;//for FIFO
-
 unsigned int clock=0;//for FIFO
 unsigned int clock1=0;//for FIFO
-
-struct FIFO_for_angle{
-  uint8_t index_start;//存到哪
-  uint8_t index_end;//處理到哪
-  uint8_t container[10][2];
-}angle_FIFO={-1,-1,{{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}}};
-typedef enum {Header,Bytes,type,Data,checksum}state;
-state now_state;
-
 uint8_t mode;//輪循(mode=0:學習,mode=1:控制)
 uint8_t command;//伺服機設定命令
 uint16_t now[17];//當下姿態 (range:3500-11500)
@@ -37,14 +24,52 @@ uint16_t accumulate[200];//準備寫入SDC的資料(和人機上的總表大致�
 //範例:accumulate[]={7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,3,7600,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,7500,255}
 //說明:7500..:該時刻17軸角度資料(range:3500-11500); 3:和下一時刻資料要內插成3個間格 ;255:資料結束(沒有下一時刻了)
 
+struct FIFO_for_angle{//學習模式用的FIFO
+  uint8_t index_start;//存到哪
+  uint8_t index_end;//處理到哪
+  uint8_t container[10][2];
+}angle_FIFO={-1,-1,{{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}}};
+typedef enum {Header,Bytes,type,Data,checksum}state;
+state now_state;//解包狀態
+
+void messenger_dealer(); //訊息交換機MCU
+void my_decoder(uint8_t u);//解封包
+void USART_Init( unsigned int ubrr );//uart0連藍牙
+void robot_gesture_player();//機器人姿態播放器
+void ACK( unsigned char data ) ;//單純的UART送訊 發訊給人機
+void Update_accmulate(uint8_t c);  //更新總表
+void KONDO_SDC_read(uint8_t code);
 void KONDO_SDC_write(uint8_t code);
-void KONDO_SDC_write(uint8_t code);
-void UART1_Transmit( unsigned int data );
+void command_processor(uint8_t c);//監控命令處理器
+void USART1_Init( unsigned int ubrr );//uart1連KONDO伺服機
+void KONDO_transmit();//伺服機監控器
+void TIMER2_INIT();//計時中斷設定
+// Internal functions declare~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+static int stdio_putchar(char c, FILE *stream);
+static int stdio_getchar(FILE *stream);
+static FILE STDIO_BUFFER = FDEV_SETUP_STREAM(stdio_putchar, stdio_getchar, _FDEV_SETUP_RW);
+static int stdio_putchar(char c, FILE *stream) {
+    if (c == '\n')
+        stdio_putchar('\r',stream);
+    while((UCSR0A&(1<<UDRE0))==0)
+        ;
+    UDR0 = c;
+    return 0;
+}
+static int stdio_getchar(FILE *stream) {
+	int UDR_Buff;
+    while((UCSR0A&(1<<RXC0))==0)
+        ;
+	UDR_Buff = UDR0;
+	stdio_putchar(UDR_Buff,stream);
+	return UDR_Buff;
+}
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void messenger_dealer(){     //訊息交換機MCU
 
   if((g[0]|g[1])!=0 && g[2]==0){
     mode=0;//進入學習模式
-
+    printf("ENTER Learning Mode\n" );
     while ((angle_FIFO.index_start+1)%10 == angle_FIFO.index_end) {
       printf("FIFO is FULL\n" );
     }
@@ -53,20 +78,6 @@ void messenger_dealer(){     //訊息交換機MCU
     angle_FIFO.index_start=(angle_FIFO.index_start+1)%10;
     angle_FIFO.container[0][angle_FIFO.index_start]=g[0];
     angle_FIFO.container[1][angle_FIFO.index_start]=g[1];
-    why=7500;
-    UART1_Transmit(0b10000000+0);
-    _delay_ms(1);
-    UART1_Transmit(why>>7);
-    _delay_ms(1);
-    UART1_Transmit(why&127);
-    _delay_ms(1);
-    why=7600;
-    UART1_Transmit(0b10000000+0);
-    _delay_ms(1);
-    UART1_Transmit(why>>7);
-    _delay_ms(1);
-    UART1_Transmit(why&127);
-    _delay_ms(1);
   }else if((g[0]|g[1])==0 && g[2]!=0){
     mode=1;//進入控制模式
     command=g[2];
@@ -75,20 +86,11 @@ void messenger_dealer(){     //訊息交換機MCU
   }
 }
 void my_decoder(uint8_t u){
-  DDRF=0xff;
-  PORTF=0;
-
   static uint8_t b,d,sum_check;
   static uint16_t len_data;
   switch (now_state) {
     case Header:{
-      // int why=7000;
-      // UART1_Transmit(0b10000000+0);
-      // _delay_ms(1);
-      // UART1_Transmit(why>>7);
-      // _delay_ms(1);
-      // UART1_Transmit(why&127);
-
+      printf("decoder_Header_____\n" );
       b=0;
       d=0;
       len_data=0;
@@ -97,36 +99,19 @@ void my_decoder(uint8_t u){
       break;
     }
     case type:{
-      // int why=7200;
-      // UART1_Transmit(0b10000000+0);
-      // _delay_ms(1);
-      // UART1_Transmit(why>>7);
-      // _delay_ms(1);
-      // UART1_Transmit(why&127);
-
+      printf("decoder_type_______\n");
       if(u) now_state=Bytes; //只要是正數就好了@@
       else  now_state=Header;
 
       break;
     }
     case Bytes:{
+      printf("decoder_Bytes______\n" );
       if(b==0){
-        // int why=7400;
-        // UART1_Transmit(0b10000000+0);
-        // _delay_ms(1);
-        // UART1_Transmit(why>>7);
-        // _delay_ms(1);
-        // UART1_Transmit(why&127);
         sum_check+=u;
         len_data= (u<<8);
         b++;
       }else if(b==1){
-        // int why=7600;
-        // UART1_Transmit(0b10000000+0);
-        // _delay_ms(1);
-        // UART1_Transmit(why>>7);
-        // _delay_ms(1);
-        // UART1_Transmit(why&127);
         sum_check+=u;
         len_data|=u;
         b=0;
@@ -137,23 +122,12 @@ void my_decoder(uint8_t u){
       break;
     }
     case Data:{
+      printf("decoder_Data_______\n" );
       if(d<len_data-1){
-        // int why=7800;
-        // UART1_Transmit(0b10000000+0);
-        // _delay_ms(1);
-        // UART1_Transmit(why>>7);
-        // _delay_ms(1);
-        // UART1_Transmit(why&127);
         sum_check+=u;
         g[d]=u;
         d++;
       }else if(d==len_data-1){
-        // int why=8000;
-        // UART1_Transmit(0b10000000+0);
-        // _delay_ms(1);
-        // UART1_Transmit(why>>7);
-        // _delay_ms(1);
-        // UART1_Transmit(why&127);
         sum_check+=u;
         g[d]=u;
         d=0;
@@ -165,28 +139,10 @@ void my_decoder(uint8_t u){
       break;
     }
     case checksum:{
-      // int why=8200;
-      // UART1_Transmit(0b10000000+0);
-      // _delay_ms(1);
-      // UART1_Transmit(why>>7);
-      // _delay_ms(1);
-      // UART1_Transmit(why&127);
+      printf("decoder_checksum___\n" );
       uint8_t tmp=(sum_check&0xff);
       if(tmp == u){
         sum_check=0;
-        why=3500;
-        UART1_Transmit(0b10000000+0);
-        _delay_ms(1);
-        UART1_Transmit(why>>7);
-        _delay_ms(1);
-        UART1_Transmit(why&127);
-        _delay_ms(1);
-        why=3600;
-        UART1_Transmit(0b10000000+0);
-        _delay_ms(1);
-        UART1_Transmit(why>>7);
-        _delay_ms(1);
-        UART1_Transmit(why&127);
         messenger_dealer();
         now_state=Header;
       }else{
@@ -197,15 +153,25 @@ void my_decoder(uint8_t u){
   }
 }
 
-void UART0_Init( unsigned int ubrr )
+void USART_Init( unsigned int ubrr )
 {
   UBRR0H |= (unsigned char)(ubrr>>8);
   UBRR0L |= (unsigned char)ubrr;
   UCSR0B|=(1<<RXCIE0);//Rx中斷致能
   UCSR0B |= (1<<RXEN0)|(1<<TXEN0);//Tx Rx致能
   UCSR0B &= (~(1<<UCSZ02));//8-bit: UCSZn2=0,UCSZn1=1,UCSZn0=1
-  UCSR0C |=(1<<UCSZ01)|(1<<UCSZ00);
+  UCSR0C |=(1<<UCSZ01)|(1<<UCSZ10);
   UCSR0C &= (~(1<<USBS0));//stopbit=1
+  stdout = &STDIO_BUFFER;
+  stdin = &STDIO_BUFFER;
+
+  // UBRR1H |= (unsigned char)(ubrr>>8);
+  // UBRR1L |= (unsigned char)ubrr;
+  // UCSR1B|=(1<<RXCIE1);//Rx中斷致能
+  // UCSR1B |= (1<<RXEN1)|(1<<TXEN1);//Tx Rx致能
+  // UCSR1B &= (~(1<<UCSZ12));//8-bit: UCSZn2=0,UCSZn1=1,UCSZn0=1
+  // UCSR1C |=(1<<UCSZ11)|(1<<UCSZ10);
+  // UCSR1C &= (~(1<<USBS1));//stopbit=1
 }
 
 
@@ -253,9 +219,12 @@ void robot_gesture_player(){//機器人姿態播放器
 }
 void ACK( unsigned char data ) //單純的UART1送訊
 {
-  UDR1 = data;
-  while ( !( UCSR1A & (1<<UDRE1)) )  //If UDREn is one, the buffer is empty
+  UDR0 = data;
+  while ( !( UCSR0A & (1<<UDRE0)) )  //If UDREn is one, the buffer is empty
   ;
+  // UDR1 = data;
+  // while ( !( UCSR1A & (1<<UDRE1)) )  //If UDREn is one, the buffer is empty
+  // ;
 }
 void Update_accmulate(uint8_t c){  //更新總表
   static uint8_t num_of_active;//紀錄目前有幾個定格姿態
@@ -284,6 +253,7 @@ void KONDO_SDC_read(uint8_t code)
   _delay_ms(500);
 	char name[4];
   switch (code) {
+   printf("code=%d~~~~~~~~~~~~~\n",code );
  	 case 21:sprintf(name,"%.4s","SDC1");break;
  	 case 22:sprintf(name,"%.4s","SDC2");break;
  	 case 23:sprintf(name,"%.4s","SDC3");break;
@@ -295,12 +265,12 @@ void KONDO_SDC_read(uint8_t code)
  	 default:sprintf(name,"%.4s","SDC8");break;
   }
 
-  unsigned char ASA_ID = 4;
-  uint8_t swap_buffer[10];// 宣告 與SDC00交換資料的資料陣列緩衝區
- 	unsigned int temp[10];//陣列緩衝區
- 	// int z=0;
-	int ack=0;
-	int i=0;
+  static unsigned char ASA_ID = 4;
+  static uint8_t swap_buffer[10];// 宣告 與SDC00交換資料的資料陣列緩衝區
+ 	static unsigned int temp[10];//陣列緩衝區
+ 	static int z=0;
+	static int ack=0;
+	static int i=0;
 	SDC_data[0]=0;
 
  	char check = 0;	// module communication result state flag
@@ -363,25 +333,16 @@ void KONDO_SDC_read(uint8_t code)
 						}
 					}
 					for(int j=0 ; j<i ; j++)
-					{SDC_data[0]=SDC_data[0]+temp[j];}   //產生最終資料SDC_data
+					{SDC_data[z]=SDC_data[z]+temp[j];}   //產生最終資料SDC_data
 					// printf("SDC_data[%d]=%d\n",z,SDC_data[z] );
 				}//if(ack==32)
 			}//while (ack!=32)
 
 	    // printf("get one item: ");
-      if(ack!=35)
-	    {KONDO_SDC_FIFO[SDC_FIFO_rear]=SDC_data[0];}
+	    KONDO_SDC_FIFO[SDC_FIFO_rear]=SDC_data[z];
 			// printf("%d\n",KONDO_SDC_FIFO[SDC_FIFO_rear] );
 
-      if(ack==35)
-      {
-        if(SDC_FIFO_rear==0)
-        {SDC_FIFO_rear=9;}
-        else
-        {SDC_FIFO_rear=SDC_FIFO_rear-1;}
-      }
-
-			SDC_data[0]=0;
+			SDC_data[z]=0;
 			for(int j=0 ; j<10 ; j++)//清空緩衝器
 			{
 				swap_buffer[j]=0;
@@ -579,67 +540,75 @@ void command_processor(uint8_t c){//監控命令處理器
 
 
 
-void UART1_Init( unsigned int ubrr )
+void USART1_Init( unsigned int ubrr )
 {
-/* Set baud rate */
-UBRR1H = (unsigned char)(ubrr>>8);   //p.362 // fosc = 11.0592MHz，Baud Rate=9600，U2X=0 =>UBRR=71，U2X=1=>UBRR=143
-UBRR1L = (unsigned char)ubrr;
-/* Enable receiver and transmitter */
-UCSR1B = (1<<RXEN1)|(1<<TXEN1);    //enables the USARTn Receiver，enables the USARTn Transmitter
-/* Set frame format: 8data, 2stop bit */
-//UCSR1C = (0<<USBS1)|(3<<UCSZ10); //selects the number of stop bits，USBS1=1=> 2 bits
-UCSR1C = (1<<UPM11)|(0<<UPM10)|(1<<USBS1)|(1<<UCSZ11)|(1<<UCSZ10)|(0<<UCPOL1);//Character Size=8 bits，UCPOL1=上升/下降
+  /* Set baud rate */
+  UBRR1H |= (unsigned char)(ubrr>>8);   //p.362 // fosc = 11.0592MHz，Baud Rate=9600，U2X=0 =>UBRR=71，U2X=1=>UBRR=143
+  UBRR1L |= (unsigned char)ubrr;
+  /* Enable receiver and transmitter */
+  UCSR1B |= (1<<TXEN1);    //enables the USARTn Receiver，enables the USARTn Transmitter
+  /* Set frame format: 8data, 2stop bit ,ParityCheck:EVEN */
+  UCSR1C |= (1<<UPM11)|(0<<UPM10)|(1<<USBS1)|(1<<UCSZ11)|(1<<UCSZ10)|(0<<UCPOL1);
 }
-void UART1_Transmit( unsigned int data )
-{
-/* Wait for empty transmit buffer */
-while ( !( UCSR1A & (1<<UDRE1)) )  //If UDREn is one, the buffer is empty
-;
-/* Put data into buffer, sends the data */
-UDR1 = data;
+void KONDO_transmit(){
+  // printf("IntoKONDO_transmit\n");
+  int Servo_ID[9] = {0,1,2,4,6,7,8,9,10};
 
-// printf("UDR1=%d\n",UDR1 );
+  /*洞洞板重新設定*/
+  DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
+  PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
+  PORTB &= ~(1<<PB7);
+  PORTB &= ~(1<<PB5);
+
+  for(int i = 0;i < 17; i++){
+    //判斷ID，決定致能左或右
+    if(i > 8){  //0~8
+      PORTF = 191;
+      // PORTF = 127;
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+      UDR1 = Servo_ID[i-8] + 128;
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+      UDR1 = now[i]>>7;
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+      UDR1 = now[i]&127;
+    }else{
+      PORTF = 127;
+      // PORTF = 191;  //9~16
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+      UDR1 = Servo_ID[i] + 128;
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+      UDR1 = now[i]>>7;
+      while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
+      UDR1 = now[i]&127;
+    }
+  }
+}
+void TIMER2_INIT(){  //計時中斷設定
+  TCCR2|=(1<<WGM21);  //CTC Mode
+	TCCR2|=(1<<CS21)|(1<<CS20); //clkI/O/64 (From prescaler)
+	TIMSK|=(1<<OCIE2);
+	OCR2=171;
 }
 int main(){
-  // ASA_M128_set();
-  // printf("START\n" );
-  TCCR2|=(1<<WGM21);  //CTC Mode
-	  TCCR2|=(1<<CS21)|(1<<CS20); //clkI/O/64 (From prescaler)
-	  TIMSK|=(1<<OCIE2);
-	  OCR2=171;
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
   PORTB |= (1<<PB6);//洞洞板通道開啟(洞洞板轉到2
-  UART1_Init(FOSC/16/115200-1);
-  UART0_Init(FOSC/16/9600-1);
+  PORTB &= ~(1<<PB7);
+  PORTB &= ~(1<<PB5);
+  DDRF=0xff;
+  TIMER2_INIT();//計時中斷設定
+  USART_Init( FOSC/16/115200-1);//BlueTooth
+  USART1_Init(  FOSC/16/115200-1 );//KONDO
   sei();
-  int a;
-  char ID;
-  a=6800;
-  for(int i=0;i<3;i++)
-  {
-    if(a>11500){
-      a=3500;
-    }
-    ID=0;
-    printf("ID:%d ",ID );
-    printf("a=%d\n",a );
-    UART1_Transmit(0b10000000+ID);
-    _delay_ms(1);
-    UART1_Transmit(a>>7);
-    _delay_ms(1);
-    UART1_Transmit(a&127);
-
-
-    a+=300;
-    _delay_ms(500);
-
-
-
-
-  }
+  for(int i=0;i<20;i++) ACK(65+i); //只是monitor顯示測試
+  printf("START______________\n" );
   while (1) {
-        command_processor(command);//監控命令處理器
-      }
+    if(mode==0){
+      robot_gesture_player();//姿態播放器
+      //學習模式移回主程式中輪巡可更新快一點
+    }else if(mode==1){
+      command_processor(command);//監控命令處理器
+    }
+  }
   return 0;
 }
 
@@ -648,75 +617,17 @@ ISR(USART0_RX_vect) {
 	uint8_t g=UDR0;
   my_decoder(g);
 }
-void KONDO_transmit(){
-  int Servo_ID[9] = {0,1,2,4,6,7,8,9,10};
-
-  /*洞洞板重新設定*/
-  DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
-  PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
-  PORTB &= ~(1<<PB7);
-  PORTB &= ~(1<<PB5);
-  DDRF=255;
-
-  for(int i = 0;i < 17; i++){
-    //判斷ID，決定致能左或右
-    if(i > 8){  //0~8
-      PORTF = 127;
-      // while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
-      // UDR1 = Servo_ID[i-8] + 128;
-      // while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
-      // UDR1 = Now[i]>>7;
-      // while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
-      // UDR1 = Now[i]&127;
-      UART1_Transmit(0b10000000+Servo_ID[i-8]);
-      _delay_ms(1);
-      UART1_Transmit(now[i]>>7);
-      _delay_ms(1);
-      UART1_Transmit(now[i]&127);
-    }else{
-      PORTF = 191;  //9~16
-      // while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
-      // UDR1 = Servo_ID[i] + 128;
-      // while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
-      // UDR1 = Now[i]>>7;
-      // while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
-      // UDR1 = Now[i]&127;
-      UART1_Transmit(0b10000000+Servo_ID[i-8]);
-      _delay_ms(1);
-      UART1_Transmit(now[i]>>7);
-      _delay_ms(1);
-      UART1_Transmit(now[i]&127);
-    }
-
-  }
-
-}
 ISR(TIMER2_COMP_vect){
   clock++;
-	if(clock==100)
-	{;
-    // KONDO_transmit();
-    // int why=11500;
-    // UART1_Transmit(0b10000000+0);
-    // _delay_ms(1);
-    // UART1_Transmit(why>>7);
-    // _delay_ms(1);
-    // UART1_Transmit(why&127);
-    // KONDO_transmit();
-    // why=3500;
-    // UART1_Transmit(0b10000000+0);
-    // _delay_ms(1);
-    // UART1_Transmit(why>>7);
-    // _delay_ms(1);
-    // UART1_Transmit(why&127);
-    // KONDO_transmit();
-
-
-
+  if(clock%500==0){
+    KONDO_transmit();
+  }
+	if(clock==1000)
+	{
 		clock1++;
-		clock=0;
 		// printf("clock1=%d \n",clock1);
 		robot_gesture_player();
+    clock=0;
 	}
 
 }
