@@ -404,20 +404,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.about(self,"Error","很抱歉出現異常錯誤")
 
     def save_to_SDC(self):
-        if self.accumulate_angle_data !=[]:
-            items=("1","2","3","4","5","6","7","8")
-            item,ok=QInputDialog.getItem(self,"儲存至SD卡","選擇編號1~8",items,0,False)
-            if ok and item:
-                print('select=',item)
-                data=[0,0,10+int(item)]
-                self.ack.start()
-                self.dia_waiting.show()
-                self.encoder_and_send_pac(data)
-            else :
-                print('Cancel')
-        else:
-            print('目前無佔存之動作串')
-            QMessageBox.about(self,"No Thing","尚無暫存之動作串")
+        # if self.accumulate_angle_data !=[]:
+        items=("1","2","3","4","5","6","7","8")
+        item,ok=QInputDialog.getItem(self,"SDC open file","選擇編號1~8",items,0,False)
+        if ok and item:
+            print('select=',item)
+            data=[0,0,10+int(item)]
+            self.ack.start()
+            self.dia_waiting.show()
+            self.encoder_and_send_pac(data)
+        else :
+            print('Cancel')
+        # else:
+            # print('目前無佔存之動作串')
+            # QMessageBox.about(self,"No Thing","尚無暫存之動作串")
 
     def play(self):   #試播
         if self.accumulate_angle_data !=[]:

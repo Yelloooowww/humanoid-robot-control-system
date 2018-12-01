@@ -677,7 +677,6 @@ class Ui_MainWindow(object):
         self.pushButton_2.setText(_translate("MainWindow", "清空動作串"))
         self.pushButton_3.setText(_translate("MainWindow", "刪除動作"))
         self.pushButton_4.setText(_translate("MainWindow", "儲存至電腦"))
-        self.pushButton_5.setText(_translate("MainWindow", "儲存至SD卡"))
+        self.pushButton_5.setText(_translate("MainWindow", "SDC開檔"))
         self.pushButton_6.setText(_translate("MainWindow", "開啟檔案"))
         self.pushButton_7.setText(_translate("MainWindow", "模擬遙控器"))
-
