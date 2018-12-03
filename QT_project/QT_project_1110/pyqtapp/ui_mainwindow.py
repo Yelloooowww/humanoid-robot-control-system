@@ -673,7 +673,7 @@ class Ui_MainWindow(object):
         self.pushButton_8.setText(_translate("MainWindow", "紀錄"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "教學視窗"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "總覽"))
-        self.pushButton.setText(_translate("MainWindow", "播放"))
+        self.pushButton.setText(_translate("MainWindow", "CloseFile"))
         self.pushButton_2.setText(_translate("MainWindow", "清空動作串"))
         self.pushButton_3.setText(_translate("MainWindow", "刪除動作"))
         self.pushButton_4.setText(_translate("MainWindow", "儲存至電腦"))

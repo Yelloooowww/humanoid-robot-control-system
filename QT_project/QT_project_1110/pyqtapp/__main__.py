@@ -282,14 +282,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.about(self,"Too long","動作串長度不可以超過10個")
         else:
             if self.num_of_active ==0:
-                self.encoder_and_send_pac([0,0,6])
-                QMessageBox.about(self,"Have Recorded","已記錄")
-                self.accumulate_angle_data += self.now_angle_data
-                after_len=len(self.accumulate_angle_data)
-                print('After len=',after_len)
-                self.num_of_active +=1
-                print('num=',self.num_of_active)
-                self.total_table_update()  #更新總表
+                items=("1","2","3","4","5","6","7","8")
+                item,ok=QInputDialog.getItem(self,"SDC open file","選擇編號1~8",items,0,False)
+                if ok and item:
+                    print('select=',item)
+                    data=[0,0,10+int(item)]
+                    self.ack.start()
+                    self.dia_waiting.show()
+                    self.encoder_and_send_pac(data)
+                    self.accumulate_angle_data += self.now_angle_data
+                    after_len=len(self.accumulate_angle_data)
+                    print('After len=',after_len)
+                    self.num_of_active +=1
+                    print('num=',self.num_of_active)
+                    self.total_table_update()  #更新總表
+                else :
+                    print('Cancel')
+                # self.encoder_and_send_pac([0,0,6])
+                # QMessageBox.about(self,"Have Recorded","已記錄")
+                # self.accumulate_angle_data += self.now_angle_data
+                # after_len=len(self.accumulate_angle_data)
+                # print('After len=',after_len)
+                # self.num_of_active +=1
+                # print('num=',self.num_of_active)
+                # self.total_table_update()  #更新總表
             elif self.num_of_active <10 and self.num_of_active>0:
                 items=("很快","快","正常","慢","很慢")
                 item,ok=QInputDialog.getItem(self,"紀錄姿態","與前一姿態間格",items,0,False)

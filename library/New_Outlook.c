@@ -1,7 +1,6 @@
-// 20181201
-//FIFO函式增加return 可以check看一下資料有沒有正常放進去
-//學習mode完成
-//KONDO_transmit()已直接加上FIFO的使用
+//20181203
+//學習mode SDC read/write 播放功能 皆測試成功 Congratulations!!!
+//訊號正確可是黃色腳偶爾會亂動
 #include "ASA_Lib.h"
 #include <avr/interrupt.h>
 #include <math.h>
@@ -42,40 +41,103 @@ unsigned int  SDC_FIFO_max=10;//for FIFO
 unsigned int  SDC_FIFO_rear=9;//for FIFO
 unsigned int  SDC_FIFO_front=9;//for FIFO
 uint16_t KONDO_SDC_FIFO[10][17];//姿態FIFO
+// char PutIn(uint16_t *p){
+//   if((SDC_FIFO_rear+1)%SDC_FIFO_max==SDC_FIFO_front){
+//     // printf("FIFO Is FULL\n" );
+//     return 1;
+//   }else{
+//     // printf("put in\n" );
+//     SDC_FIFO_rear=(SDC_FIFO_rear+1)%SDC_FIFO_max;
+//     printf("*(p+i)= " );
+//     for(int i=0;i<17;i++){
+//       printf("%d ",*(p+i) );
+//       KONDO_SDC_FIFO[i][SDC_FIFO_rear]=*(p+i);
+//     }
+//     printf("___________________\n" );
+//   }
+//   // printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
+//   return 0;
+// }
+//
+// char TakeOut(uint16_t *t){
+//   if(SDC_FIFO_front == SDC_FIFO_rear){
+//     // printf("FIFO Is Empty\n");
+//     return 1;
+//   }else{
+//     // printf("take out\n" );
+//     SDC_FIFO_front=(SDC_FIFO_front+1)%SDC_FIFO_max;
+//     printf("*(t+i)= " );
+//     for(int i=0;i<17;i++){
+//       *(t+i)=KONDO_SDC_FIFO[i][SDC_FIFO_front];
+//       printf("%d ",*(t+i));
+//     }
+//     printf("___________________\n" );
+//   }
+//   // printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
+//   return 0;
+// }
+unsigned char FIFO_flag;//for FIFO
 char PutIn(uint16_t *p){
-  if((SDC_FIFO_rear+1)%SDC_FIFO_max==SDC_FIFO_front){
-    // printf("FIFO Is FULL\n" );
-    return 1;
-  }else{
-    // printf("put in\n" );
-    SDC_FIFO_rear=(SDC_FIFO_rear+1)%SDC_FIFO_max;
-    printf("*(p+i)= " );
-    for(int i=0;i<17;i++){
-      printf("%d ",*(p+i) );
-      KONDO_SDC_FIFO[i][SDC_FIFO_rear]=*(p+i);
-    }
-    printf("___________________\n" );
+	SDC_FIFO_rear=(SDC_FIFO_rear+1) % SDC_FIFO_max; //第一次進來，SDC_FIFO_rear=0;第二次進來，SDC_FIFO_rear=1....
+  if(SDC_FIFO_front == SDC_FIFO_rear)
+	{
+		if(SDC_FIFO_rear == 0)
+		{SDC_FIFO_rear=SDC_FIFO_max-1;}
+		else
+		{
+			SDC_FIFO_rear=SDC_FIFO_rear-1;
+			printf("FIFO Is FULL\n" );
+	    return 1;
+		}
   }
-  // printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
-  return 0;
-}
+	else
+	{
+    printf("put in\n" );
+    // SDC_FIFO_rear=(SDC_FIFO_rear+1)%SDC_FIFO_max;
+    printf("*(p+i)= " );
+    for(int i=0;i<17;i++)
+		{
+      KONDO_SDC_FIFO[SDC_FIFO_rear][i]=*(p+i);
+      printf("*%d ", *(p+i));
+    }
+    printf("\n" );
+		FIFO_flag=1;
+
+		printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
+		return 0;
+
+  }
+
+
+}//void PutIn(uint8_t *p)
+
 
 char TakeOut(uint16_t *t){
-  if(SDC_FIFO_front == SDC_FIFO_rear){
+  if(SDC_FIFO_front == SDC_FIFO_rear)
+	{
     // printf("FIFO Is Empty\n");
     return 1;
-  }else{
-    // printf("take out\n" );
+  }
+	else
+	{
+		if(FIFO_flag==1)
+		{
+    printf("take out\n" );
     SDC_FIFO_front=(SDC_FIFO_front+1)%SDC_FIFO_max;
     printf("*(t+i)= " );
-    for(int i=0;i<17;i++){
-      *(t+i)=KONDO_SDC_FIFO[i][SDC_FIFO_front];
-      printf("%d ",*(t+i));
+    for(int i=0;i<17;i++)
+		{
+      *(t+i)=KONDO_SDC_FIFO[SDC_FIFO_front][i];
+      printf("^%d ",*(t+i) );
     }
-    printf("___________________\n" );
+    printf("\n" );
+		printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
+		return 0;
+		}
+
   }
-  // printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
-  return 0;
+
+
 }
 // decoder~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef enum {Header,Bytes,type,Data,checksum}state;
@@ -169,18 +231,319 @@ void messenger_dealer(){//訊息交換機MCU
     printf("mode=0!!!\n" );
   }
 }
+// SDC~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int data[100];
+unsigned int SDC_data[10];
+void KONDO_SDC_read(uint8_t code)
+{
+	printf("start read\n" );
+	printf("KONDO_SDC_read  code=%d\n",code );
+	char name[4];
+  switch (code) {
+ 	 case 1:sprintf(name,"%.4s","SDC1");break;
+ 	 case 2:sprintf(name,"%.4s","SDC2");break;
+ 	 case 3:sprintf(name,"%.4s","SDC3");break;
+ 	 case 4:sprintf(name,"%.4s","SDC4");break;
+ 	 case 5:sprintf(name,"%.4s","SDC5");break;
+ 	 case 6:sprintf(name,"%.4s","SDC6");break;
+ 	 case 7:sprintf(name,"%.4s","SDC7");break;
+ 	 case 8:sprintf(name,"%.4s","SDC8");break;
+ 	 default:sprintf(name,"%.4s","SDC8");break;
+  }
+
+  unsigned char ASA_ID = 4;
+  uint8_t swap_buffer[10];// 宣告 與SDC00交換資料的資料陣列緩衝區
+ 	unsigned int temp[10];//陣列緩衝區
+ 	// int z=0;
+	int ack=0;
+	int i=0;
+	SDC_data[0]=0;
+	char number=0;
+	unsigned int final_data[17];
+
+ 	char check = 0;	// module communication result state flag
+
+ 	unsigned char Mask = 0xFF, Shift = 0, Setting = 0xFF;
+
+ 	ASA_SDC00_put(ASA_ID, 64, 8, name);
+  ASA_SDC00_put(ASA_ID, 72, 3, "txt");
+
+  // Configure to open file
+  Setting = 0x01;		// Setting mode for openFile (readonly)
+  ASA_SDC00_set(ASA_ID, 200, Mask, Shift, Setting);	// 送出旗標組合
+  // printf("Start reading file data\n");
+
+	while(ack!=35)     //若資料不為#，則持續執行；若資料為#，關檔
+	{
+		// printf("start clock=%d\n",clock );
+		// printf("ackackackackackackackackackackack\n" );
+		ack=0;
+
+		// SDC_FIFO_rear=(SDC_FIFO_rear+1) % SDC_FIFO_max; //第一次進來，SDC_FIFO_rear=0;第二次進來，SDC_FIFO_rear=1....
+	  // if(SDC_FIFO_front == SDC_FIFO_rear)
+	  // {
+	  //   if(SDC_FIFO_rear == 0)
+	  //   {SDC_FIFO_rear=SDC_FIFO_max-1;}
+	  //   else
+	  //   {
+	  //     SDC_FIFO_rear=SDC_FIFO_rear-1;
+	  //       // printf("\nQueue is full!\n");
+	  //   }
+	  // }
+	  // else
+    // {
+			while (ack!=32)
+			{
+				// printf("start get\n" );
+				ASA_SDC00_get(ASA_ID, 0, 1, &swap_buffer[i]);//從SD卡中取出1 Byte資料
+				// printf("swap_buffer[%d]=%d\n",i,swap_buffer[i] );
+				ack=swap_buffer[i];
+				if(ack==35)
+				{break;}
+				// printf("ack=%d\n",ack );
+				i++;
+				if(ack==32)//
+				{
+					swap_buffer[i-1]=0;
+					i--;
+					// printf("get data!\n" );
+					for(int j=0 ; j<i ; j++)
+					{
+						if(swap_buffer[j]>=48 && swap_buffer[j]<=57)
+						{
+							temp[j]=swap_buffer[j]-48;
+							for(int k=0 ; k<(i-j-1) ; k++)
+							{temp[j]=temp[j]*10;}
+							// printf("data[%d]=%d\n",j,data[j] );
+						}
+						else if(swap_buffer[j]==13 || swap_buffer[j]==10)
+						{
+							swap_buffer[j]=0;
+							temp[j]=0;
+						}
+					}
+					for(int j=0 ; j<i ; j++)
+					{SDC_data[0]=SDC_data[0]+temp[j];}   //產生一筆最終資料SDC_data
+					final_data[number]=SDC_data[0];
+					number++;//紀錄產生了多少筆資料
+					// printf("SDC_data[%d]=%d\n",z,SDC_data[z] );
+				}//if(ack==32)
+			}//while (ack!=32)
+
+	    // printf("get one item: ");
+			if(ack!=35 && number==17)
+	    {
+				char check=1;
+				while (check!=0)
+				{
+					check=PutIn(final_data);
+				}
+				number=0;
+
+				// KONDO_SDC_FIFO[SDC_FIFO_rear]=SDC_data[0];
+				// FIFO_flag=1;
+				// printf("KONDO_SDC_FIFO[%d]=%d\n",SDC_FIFO_rear,KONDO_SDC_FIFO[SDC_FIFO_rear] );
+
+			}
+			// printf("end clock=%d\n",clock );
+
+			// if(ack==35)
+			// {
+			// 	if(SDC_FIFO_rear==0)
+			// 	{SDC_FIFO_rear=9;}
+			// 	else
+			// 	{SDC_FIFO_rear=SDC_FIFO_rear-1;}
+			// }
+			// printf("%d\n",KONDO_SDC_FIFO[SDC_FIFO_rear] );
+
+			SDC_data[0]=0;
+			for(int j=0 ; j<10 ; j++)//清空緩衝器
+			{
+				swap_buffer[j]=0;
+				temp[j]=0;
+			}
+			i=0;
+	  // }
+
+
+	}//while(ack!=35)
+	// Configure to close file mode
+  Setting = 0x00;
+  check = ASA_SDC00_set(ASA_ID, 200, Mask, Shift, Setting);// 送出旗標組合
+	printf("close the file\n" );
+	// for(int j=0 ; j<z ; j++)
+	// printf("SDC_data[%d]=%d\n",j,SDC_data[j] );
+}//KONDO_SDC_read
+
+
+void KONDO_SDC_write(uint8_t code)
+{
+	char name[4];
+	uint8_t a[10];
+	unsigned int temp[36];
+	unsigned int gap[17];
+	unsigned int swap_buffer[100];
+	int num=0;//插入數目
+	// int count=0;
+	static char start=0;
+	static char stop=0;
+	unsigned char ASA_ID = 4;
+
+	switch (code) {
+	 case 1:sprintf(name,"%.4s","SDC1");break;
+	 case 2:sprintf(name,"%.4s","SDC2");break;
+	 case 3:sprintf(name,"%.4s","SDC3");break;
+	 case 4:sprintf(name,"%.4s","SDC4");break;
+	 case 5:sprintf(name,"%.4s","SDC5");break;
+	 case 6:sprintf(name,"%.4s","SDC6");break;
+	 case 7:sprintf(name,"%.4s","SDC7");break;
+	 case 8:sprintf(name,"%.4s","SDC8");break;
+	 case 9:start=1;stop=1;break;
+	 default:sprintf(name,"%.4s","SDC8");break;
+	}
+
+	if (start==0)
+	{
+		ASA_SDC00_put(ASA_ID, 64, 8, name);
+		ASA_SDC00_put(ASA_ID, 72, 3, "txt");
+		ASA_SDC00_set(ASA_ID, 200, 0x07, 0, 0x05);//開檔續寫
+
+		for (int i=0 ; i<17 ; i++) //將17筆資料丟入緩衝器1
+		{
+			temp[i]=now[i];
+			printf("temp[%d]=%d\n",i,temp[i]);
+		}
+
+		for (int i=0 ; i<17 ; i++) //將前17筆資料寫入SD卡
+		{
+			if(i==16)
+			{sprintf(a,"%d \r\n",temp[i]);}
+			else
+			{sprintf(a,"%d ",temp[i]);}
+			int sizeof_string =4;
+			for(int m=0; m< sizeof(a); m++)
+			{
+				if( a[m] == '\0' )
+				{// printf("null\n" );
+					sizeof_string = m;
+					break;
+				}
+			}
+			ASA_SDC00_put(ASA_ID, 0, sizeof_string, a);
+		}
+		start=1;
+	}//if (start==0)
+
+	else if (start==1 && stop==0)
+	{
+		for (int j=17 ; j<34 ; j++) //將17筆資料丟入緩衝器1
+		{
+			temp[j]=now[j-17];
+			printf("temp[%d]=%d\n",j,temp[j]);
+		}
+
+		num=code;//決定插入數目
+		printf("num=%d\n",num );
+
+		for (int i=0; i<num ; i++)//將內插值寫入SD卡
+		{
+			for (int k=0 ; k<17 ; k++)
+			{
+				if(temp[k+17]>=temp[k])
+				{swap_buffer[k]=temp[k]+(i+1)*abs(temp[k+17]-temp[k])/(num+1);}
+				else
+				{swap_buffer[k]=temp[k]-(i+1)*abs(temp[k+17]-temp[k])/(num+1);}
+
+
+				printf("swap_buffer[%d]=%d\n",k,swap_buffer[k] );
+
+				if(k==16)
+				{sprintf(a,"%d \r\n",swap_buffer[k]);}
+				else
+				{sprintf(a,"%d ",swap_buffer[k]);}
+
+				int sizeof_string =4;
+				for(int m=0; m< sizeof(a); m++)
+				{
+					if( a[m] == '\0' )
+					{// printf("null\n" );
+						sizeof_string = m;
+						break;
+					}
+				}
+				ASA_SDC00_put(ASA_ID, 0, sizeof_string, a);
+			}
+			for (int i = 0; i < 17; i++)
+			{swap_buffer[i]=0;}
+		}//for (int i=0; i<num ; i++)//將內插值寫入SD卡
+
+		for (int i=0 ; i<17 ; i++) //將17筆資料丟入緩衝器1
+		{
+			temp[i]=now[i];
+			printf("temp[%d]=%d\n",i,temp[i]);
+		}
+
+		for (int i=0 ; i<17 ; i++) //將17筆資料寫入SD卡
+		{
+			if(i==16)
+			{sprintf(a,"%d \r\n",temp[i]);}
+			else
+			{sprintf(a,"%d ",temp[i]);}
+			int sizeof_string =4;
+			for(int m=0; m< sizeof(a); m++)
+			{
+				if( a[m] == '\0' )
+				{// printf("null\n" );
+					sizeof_string = m;
+					break;
+				}
+			}
+			ASA_SDC00_put(ASA_ID, 0, sizeof_string, a);
+		}
+	}//else if (start==1)
+
+	else if (stop==1) {
+		sprintf(a,"%c",35);//寫入#
+
+		int sizeof_string =4;
+		for(int m=0; m< sizeof(a); m++)
+		{
+			if( a[m] == '\0' )
+			{// printf("null\n" );
+				sizeof_string = m;
+				break;
+			}
+		}
+		ASA_SDC00_put(ASA_ID, 0, sizeof_string, a);
+
+		ASA_SDC00_set(ASA_ID,200,0x01,0,0x00);  //關檔
+		printf("mode132 done\n" );
+
+	}
+
+
+
+}//KONDO_SDC_write
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void command_processor(uint8_t *c){//監控命令處理器
   if(*c !=0){//伺服機設定命令不是空的
       printf("command=%d\n", *c );
       if( *c <=18 && *c>=11){
         printf("OpenFile(%d)_________________\n", *c -10);
+        KONDO_SDC_write( *c -10);
+        printf("KONDO_SDC_write_______OpenFileDone_________\n");
       }
       if( *c<=5 && *c>=1){
         printf("Record with Grid=%d_________\n", *c );
+        KONDO_SDC_write( *c );
+        printf("KONDO_SDC_write_______Done_________\n");
       }
-      if( *c ==6) printf("First Time to Record\n" );
-      if( *c==7 ) printf("DEL_________________\n");
+      if( *c ==9) {
+        printf("CloseFile_________________\n");
+        KONDO_SDC_write( *c);
+        printf("KONDO_SDC_write_______CloseFileDone_________\n");
+
+      }
       *c =0;
   }
 }
@@ -203,6 +566,8 @@ void robot_gesture_player(){//機器人姿態播放器
   if(mode==1){
     if(action_num!=0){
       printf("Playing Action( %d )___________\n",action_num);
+      KONDO_SDC_read(action_num);
+      printf("Playing Action( %d )_____Done_____\n",action_num);
       action_num=0;
     }else{
       ;
@@ -289,6 +654,7 @@ void TIMER2_INIT(){  //計時中斷設定
 	TIMSK|=(1<<OCIE2);
 	OCR2=171;
 }
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int main(){
   DDRB |= (1<<DDB7)|(1<<DDB6)|(1<<DDB5);   //洞洞板通道開啟
