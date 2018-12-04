@@ -450,9 +450,9 @@ void KONDO_SDC_write(uint8_t code)
 			for (int k=0 ; k<17 ; k++)
 			{
 				if(temp[k+17]>=temp[k])
-				{swap_buffer[k]=temp[k]+(i+1)*abs(temp[k+17]-temp[k])/(num+1);}
+				{swap_buffer[k]=temp[k]+(i+1)*(temp[k+17]-temp[k])/(num+1);}
 				else
-				{swap_buffer[k]=temp[k]-(i+1)*abs(temp[k+17]-temp[k])/(num+1);}
+				{swap_buffer[k]=temp[k]-(i+1)*(temp[k]-temp[k+17])/(num+1);}
 
 
 				printf("swap_buffer[%d]=%d\n",k,swap_buffer[k] );
