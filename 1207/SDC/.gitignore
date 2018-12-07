@@ -1,0 +1,18 @@
+# Block all file
+
+*
+
+
+
+# C file & header file
+
+
+!*.c
+
+!*.h
+
+!*.md
+
+!*.a
+
+!.gitignore
