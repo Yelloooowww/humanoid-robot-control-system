@@ -1,0 +1,117 @@
+void my_decoder(uint8_t u){ //解封包
+  switch (狀態) {
+    case Header:{
+      各項參數先歸零
+      if(封包頭正確) 狀態=type;
+      break;
+    }
+    case type:{
+      if(收到的type型態可以接受) 狀態=Bytes;
+      else  狀態=Header;
+      break;
+    }
+    case Bytes:{
+      if(第一次進到Bytes){
+        累加 sum_check+=這次收到的值;
+        封包資料量長度 len_data= (這次收到的值<<8);//這次收到的是長度的高位元
+      }else if(第二次進到Bytes){
+        累加 sum_check+=這次收到的值;
+        封包資料量長度 len_data|=這次收到的值;//這次收到的是長度的低位元
+        狀態=Data;
+      }else{
+        狀態=Header;
+      }
+      break;
+    }
+    case Data:{
+      if(還不到最後1byte){
+        累加 sum_check+=這次收到的值;
+        get[d]=這次收到的值;
+        d++;
+      }else if(這是最後1byte了){
+        累加 sum_check+=這次收到的值;
+        get[d]=這次收到的值;
+        狀態=checksum;
+      }else{
+        狀態=Header;
+      }
+      break;
+    }
+    case checksum:{
+      if(checksum正確){
+        解包完成 接下來換訊息交換機mcu來處理收到的完整訊息
+        狀態=Header;
+      }else{
+        狀態=Header;
+      }
+      break;
+    }
+  }
+}
+
+
+void messenger_dealer(){//訊息交換機MCU
+  // get[4]={馬達ID,角度高位元,角度低位元,命令或動作串編號}
+  if(get[3]中有動作串編號){// 切入控制mode 播放連續動作
+    action_num=get[3];
+    mode=1;// 切入控制mode
+  }else(get[3]中沒有動作串編號){
+    if(有馬達ID和角度){//前兩byte資料為 伺服機設定角度
+      將學習訊息丟進學習訊息專用的FIFO中
+    }
+    if(有命令){command=get[3];}
+    mode=0;// 切入學習mode
+  }
+}
+
+
+void command_processor(uint8_t *c){//監控命令處理器
+  if(*c!=0(有命令)){
+      if(命令內容:開檔){
+        SDC中對應的檔名開檔 並寫入第一筆
+      }
+      if(命令內容:內插寫入){
+         將now寫入SDC已開的檔案 寫入過程要用對應的間格數內插
+      }
+      if(命令內容:關檔) {
+        SDC關檔
+      }
+      if(命令內容:最佳位置){
+        最佳位置(生成一個最佳位置的陣列 丟進姿態FIFO)
+      }
+      *c =0;//命令已完成
+  }
+}
+
+
+
+void robot_gesture_player(){//機器人姿態播放器
+  if(學習模式){
+    uint16_t tmp[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    while(學習模式專用的fifo裡還有東西){//一直處理直到FIFO變成空的
+      從學習模式專用fifo裡拿出一筆學習訊息;
+      先將now複製給tmp//for(int i=0;i<17;i++) tmp[i]=now[i];
+      再依照剛剛所拿出的學習訊息 修改tmp
+      最後把tmp丟進姿態FIFO
+    }
+  }
+  if(控制模式){
+    if(有待播放的動作串 action_num!=0){
+      呼叫KONDO_SDC_read()打開對應的檔案 讀檔 將資料一筆一筆丟進姿態FIFO
+      action_num=0;//播放完成
+    }else{
+      沒有要播得東西了;
+      // printf("All Action Have Finished\n");
+    }
+  }
+}
+
+
+void KONDO_transmit(){
+  uint16_t Take[17];生成陣列接收從姿態FIFO拿出的資料
+  char check=TakeOut(Take);//return=1:空的 return=0:順利拿出資料
+  if(成功拿出一筆資料){
+    把伺服馬達各軸轉到位
+    feedback伺服機量測角度
+  }
+}
