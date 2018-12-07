@@ -286,11 +286,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def to_the_best_position(self):  #強迫轉到最佳位置
         self.now_angle_data=[7500,8600,9500,4700,7300,7500,9000,8300,7500,6400,5500,0,7700,7500,6000,6700,7500]
-        # self.last=[7500,8600,9500,4700,7300,7500,9000,8300,7500,6400,5500,0,7700,7500,6000,6700,7500]
         data=[0,0,0,31]
         self.encoder_and_send_pac(data)
-        # time.sleep(5)
-
         self.spinBox.setValue(7500)
         self.spinBox_1.setValue(8600)
         self.spinBox_2.setValue(9500)

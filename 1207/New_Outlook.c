@@ -38,74 +38,34 @@ unsigned int  SDC_FIFO_max=10;//for FIFO
 unsigned int  SDC_FIFO_rear=9;//for FIFO
 unsigned int  SDC_FIFO_front=9;//for FIFO
 uint16_t KONDO_SDC_FIFO[10][17];//姿態FIFO
-// char PutIn(uint16_t *p){
-//   if((SDC_FIFO_rear+1)%SDC_FIFO_max==SDC_FIFO_front){
-//     // printf("FIFO Is FULL\n" );
-//     return 1;
-//   }else{
-//     // printf("put in\n" );
-//     SDC_FIFO_rear=(SDC_FIFO_rear+1)%SDC_FIFO_max;
-//     printf("*(p+i)= " );
-//     for(int i=0;i<17;i++){
-//       printf("%d ",*(p+i) );
-//       KONDO_SDC_FIFO[i][SDC_FIFO_rear]=*(p+i);
-//     }
-//     printf("___________________\n" );
-//   }
-//   // printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
-//   return 0;
-// }
-//
-// char TakeOut(uint16_t *t){
-//   if(SDC_FIFO_front == SDC_FIFO_rear){
-//     // printf("FIFO Is Empty\n");
-//     return 1;
-//   }else{
-//     // printf("take out\n" );
-//     SDC_FIFO_front=(SDC_FIFO_front+1)%SDC_FIFO_max;
-//     printf("*(t+i)= " );
-//     for(int i=0;i<17;i++){
-//       *(t+i)=KONDO_SDC_FIFO[i][SDC_FIFO_front];
-//       printf("%d ",*(t+i));
-//     }
-//     printf("___________________\n" );
-//   }
-//   // printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
-//   return 0;
-// }
 unsigned char FIFO_flag;//for FIFO
 char PutIn(uint16_t *p){
 	SDC_FIFO_rear=(SDC_FIFO_rear+1) % SDC_FIFO_max; //第一次進來，SDC_FIFO_rear=0;第二次進來，SDC_FIFO_rear=1....
   if(SDC_FIFO_front == SDC_FIFO_rear)
 	{
-		if(SDC_FIFO_rear == 0)
-		{SDC_FIFO_rear=SDC_FIFO_max-1;}
-		else
-		{
-			SDC_FIFO_rear=SDC_FIFO_rear-1;
-			printf("FIFO Is FULL\n" );
-	    return 1;
-		}
+    // if(SDC_FIFO_rear == 0)
+		// {SDC_FIFO_rear=SDC_FIFO_max-1;}
+		// else
+		// {
+		// 	SDC_FIFO_rear=SDC_FIFO_rear-1;
+		// 	printf("FIFO Is FULL\n" );
+	  //   return 1;
+		// }
+		SDC_FIFO_rear=((SDC_FIFO_rear-1)+SDC_FIFO_max)%10;
+    return 1;
   }
 	else
 	{
     printf("put in\n" );
     // SDC_FIFO_rear=(SDC_FIFO_rear+1)%SDC_FIFO_max;
-    printf("*(p+i)= " );
     for(int i=0;i<17;i++)
-		{
-      KONDO_SDC_FIFO[SDC_FIFO_rear][i]=*(p+i);
-      printf("*%d ", *(p+i));
+		{KONDO_SDC_FIFO[SDC_FIFO_rear][i]=*(p+i);
+      printf("*%d ",*(p+i) );
     }
-    printf("\n" );
 		FIFO_flag=1;
-
-		// printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
-		return 0;
-
+		printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
   }
-
-
+  return 0;
 }//void PutIn(uint8_t *p)
 
 
@@ -121,14 +81,11 @@ char TakeOut(uint16_t *t){
 		{
     printf("take out\n" );
     SDC_FIFO_front=(SDC_FIFO_front+1)%SDC_FIFO_max;
-    printf("*(t+i)= " );
     for(int i=0;i<17;i++)
-		{
-      *(t+i)=KONDO_SDC_FIFO[SDC_FIFO_front][i];
-      printf("^%d ",*(t+i) );
+		{*(t+i)=KONDO_SDC_FIFO[SDC_FIFO_front][i];
+      printf("^%d ", *(t+i));
     }
-    printf("\n" );
-		// printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
+		printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
 		return 0;
 		}
 
@@ -232,7 +189,6 @@ void messenger_dealer(){//訊息交換機MCU
   }
 }
 // SDC~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int data[100];
 unsigned int SDC_data[10];
 void KONDO_SDC_read(uint8_t code)
 {
@@ -531,17 +487,17 @@ void command_processor(uint8_t *c){//監控命令處理器
       if( *c <=18 && *c>=11){
         printf("OpenFile(%d)_________________\n", *c -10);
         KONDO_SDC_write( *c -10);
-        printf("KONDO_SDC_write_______OpenFileDone_________\n");
+        printf("OpenFileDone_________KONDO_SDC_write_______\n");
       }
       if( *c<=10 && *c>=1){
         printf("Record with Grid=%d_________\n", *c );
         KONDO_SDC_write( *c );
-        printf("KONDO_SDC_write_______Done_________\n");
+        printf("Done__KONDO_SDC_write_______\n");
       }
       if( *c ==19) {
         printf("CloseFile_________________\n");
-        KONDO_SDC_write( *c);
-        printf("KONDO_SDC_write_______CloseFileDone_________\n");
+        KONDO_SDC_write( *c -10);
+        printf("CloseFileDone_________KONDO_SDC_write_______\n");
 
       }
       if( *c ==31){
