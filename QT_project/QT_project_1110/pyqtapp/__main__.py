@@ -1,11 +1,14 @@
+# -*- coding:utf-8 -*-
 import sys
 import time
 import serial
 import functools
-from pyqtapp.ui_monitor import Ui_Monitor_Dialog
+import os
+import shutil
+from openpyxl import Workbook
 from pyqtapp.ui_mainwindow import Ui_MainWindow
 from pyqtapp.ui_remote_control_dialog import Ui_Dialog
-
+from pyqtapp.ui_waiting_dialog import Waiting_Ui_Dialog
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -16,6 +19,16 @@ from pyqtapp import images_rc
 ser = serial.Serial()
 ser.baudrate = 115200
 ser.timeout=1000
+
+
+class Waiting(QDialog, Waiting_Ui_Dialog):
+    def __init__(self, parent=None):
+        super(Waiting, self).__init__(parent)
+        self.setupUi(self)
+        self.setWindowTitle('Waiting')
+        self.movie=QMovie(":image/windmu_hle.gif")
+        self.label.setMovie(self.movie)
+        self.movie.start()
 
 
 
@@ -39,71 +52,53 @@ class RemoteControl(QDialog, Ui_Dialog):    #遙控器對話窗
         self.pushButton_8.clicked.connect(lambda:self.YouPress.emit(int(8)))
 
 
-class GetAck(QThread):     #這是ack
-    AAACCCKKK= pyqtSignal(bytes)
-    def __init__(self,  parent=None):
-        super().__init__(parent)
-    def run(self):
-        print('WaitForAck')
-        get=ser.read(1)
-        print('get ack=',get)
-        self.AAACCCKKK.emit(get) #收到M128端的回應後發射訊號
-
 class Monitor(QThread):
-    WantToPrint=pyqtSignal(str)
+    WantToPrint=pyqtSignal(bytes)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.text=[]
     def run(self):
         while 1:
             self.text=ser.read(20)
-            self.WantToPrint.emit(str(self.text))
+            self.WantToPrint.emit(self.text)
             self.text =[]
-
-
-
-class Monitor_DIA(QDialog, Ui_Monitor_Dialog):
-    def __init__(self, parent=None):
-        super(Monitor_DIA, self).__init__(parent)
-        self.setupUi(self)
-        self.setWindowTitle('Monitor')
-        self.mmmonitor=Monitor()
-        self.mmmonitor.WantToPrint.connect(self.showtext)
-        self.mmmonitor.start()
-    def showtext(self,value):
-        self.textBrowser.append(str(value))
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
-
-        self.RC_control=RemoteControl()
-        self.RC_control.YouPress.connect(self.SimulateRemoteControl)
-        self.ack=GetAck()
-        self.ack.AAACCCKKK.connect(self.SomethingAfterAck)
-        self.dia_waiting=QDialog()  #等待ack時叫使用者不要亂動的對話窗
-        self.delay=0.05 #通訊速率從這裡改
         self.now_angle_data=[3500,3500,4500,4000,6700,4000,6000,4900,4200,3500,4900,0,7500,4100,4000,4000,6800]
-        self.last=[3500,3500,4500,4000,6700,4000,6000,4900,4200,3500,4900,0,7500,4100,4000,4000,6800]
         self.accumulate_angle_data=[]
         self.num_of_active=0
-        self.flag=0;#旗標@@
         self.setting()
         self.vision_effect()
         self.control_object()
         self.total_table_set()
+        self.RC_control=RemoteControl()
+        self.RC_control.YouPress.connect(self.SimulateRemoteControl)
+        self.dia_waiting=Waiting()
+        self.monitor_win=Monitor()
+        self.monitor_win.WantToPrint.connect(self.mmmmonitor)
+        self.monitor_win.start()
         self.spinBox_11.setEnabled(False) #紅色4號殘障了QQ
         self.horizontalSlider_11.setEnabled(False) #紅色4號殘障了QQ
-        self.monitor_dia= Monitor_DIA()
-        self.monitor_dia.show()
+
+    def mmmmonitor(self,value): #印出M128端printf的東西 & 接收ACK
+        for x in value:
+            if x==255:
+                self.dia_waiting.accept()  #將叫使用者不要亂動的對話窗關起來
+                QMessageBox.about(self,"Done","播放完成")
+        self.textBrowser.append(str(value))
 
     def setting(self):     #通訊埠設定
         items = listports()
         item,ok=QInputDialog.getItem(self,"選擇序列埠","Select Your COM",items,0,False)
-        ser.port = str(item)
-        ser.open()
-        time.sleep(5)
+        if ok:
+            ser.port = str(item)
+            ser.open()
+            time.sleep(5)
+        else:
+            self.accept()
 
     def what_is_type(self,data):   #幫通訊封包定義的type
         return 1
@@ -123,8 +118,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         pac += checksum #checksum
         for x in pac:
             ser.write(bytes([x]))
-            # print('pac=',x)
-            time.sleep(self.delay)
+            time.sleep(0.05)
 
 
     def total_table_set(self):  #總表設定
@@ -155,12 +149,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label.setPixmap(QPixmap(":/image/_background.jpg"))
 
     def control_object(self):     #按鈕們
-        self.pushButton.clicked.connect(self.play)
+        self.pushButton.clicked.connect(self.closefile)
         self.pushButton_2.clicked.connect(self.del_all)
-        self.pushButton_3.clicked.connect(self.del_lastest_angle)
-        self.pushButton_4.clicked.connect(self.save_to_PC)
-        self.pushButton_5.clicked.connect(self.save_to_SDC)
-        self.pushButton_6.clicked.connect(self.open_file)
+        self.pushButton_3.clicked.connect(self.make_excel)
         self.pushButton_7.clicked.connect(lambda:self.RC_control.show())
         self.pushButton_8.clicked.connect(self.note_now_angle)
         self.pushButton_9.clicked.connect(self.to_the_best_position)
@@ -181,55 +172,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_14.valueChanged['int'].connect(self.ID_14)
         self.spinBox_15.valueChanged['int'].connect(self.ID_15)
         self.spinBox_16.valueChanged['int'].connect(self.ID_16)
-        # self.spinBox.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_1.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_2.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_3.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_4.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_5.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_6.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_7.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_8.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_9.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_10.valueChanged['int'].connect(self.ID_with_Angle)
-        # # self.spinBox_11.valueChanged['int'].connect(self.ID_with_Angle)  #紅色4號殘障了QQ
-        # self.spinBox_12.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_13.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_14.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_15.valueChanged['int'].connect(self.ID_with_Angle)
-        # self.spinBox_16.valueChanged['int'].connect(self.ID_with_Angle)
 
 
     def SimulateRemoteControl(self,value):   #遙控器送訊的地方
-        print('YouPress=',value)
-        self.ack.start()
         self.dia_waiting.show()
         self.encoder_and_send_pac([0,0,0,20+value])
 
-    # def ID_with_Angle(self):
-    #     self.last[0]=self.spinBox.value()
-    #     self.last[1]=self.spinBox_1.value()
-    #     self.last[2]=self.spinBox_2.value()
-    #     self.last[3]=self.spinBox_3.value()
-    #     self.last[4]=self.spinBox_4.value()
-    #     self.last[5]=self.spinBox_5.value()
-    #     self.last[6]=self.spinBox_6.value()
-    #     self.last[7]=self.spinBox_7.value()
-    #     self.last[8]=self.spinBox_8.value()
-    #     self.last[9]=self.spinBox_9.value()
-    #     self.last[10]=self.spinBox_10.value()
-    #     self.last[11]=self.spinBox_11.value()
-    #     self.last[12]=self.spinBox_12.value()
-    #     self.last[13]=self.spinBox_13.value()
-    #     self.last[14]=self.spinBox_14.value()
-    #     self.last[15]=self.spinBox_15.value()
-    #     self.last[16]=self.spinBox_16.value()
-    #
-    #     for x in range(17):
-    #         if self.last[x] != self.now_angle_data[x]:
-    #             print(x,self.last[x])
-    #             self.encoder_and_send_pac([x,self.last[x]>>8,self.last[x]&255,0])
-    #             self.now_angle_data[x]= self.last[x]
+
 
     def ID_0(self):
         self.encoder_and_send_pac([0,self.spinBox.value()>>8,self.spinBox.value()&255,0])
@@ -314,87 +263,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 items=("1","2","3","4","5","6","7","8")
                 item,ok=QInputDialog.getItem(self,"SDC open file","選擇編號1~8",items,0,False)
                 if ok and item:
-                    print('select=',item)
                     data=[0,0,0,10+int(item)]
-                    self.ack.start()
-                    self.dia_waiting.show()
+                    # self.dia_waiting.show()
                     self.encoder_and_send_pac(data)
                     self.accumulate_angle_data += self.now_angle_data
-                    after_len=len(self.accumulate_angle_data)
-                    print('After len=',after_len)
                     self.num_of_active +=1
-                    print('num=',self.num_of_active)
                     self.total_table_update()  #更新總表
-                else :
-                    print('Cancel')
-                # self.encoder_and_send_pac([0,0,0,6])
-                # QMessageBox.about(self,"Have Recorded","已記錄")
-                # self.accumulate_angle_data += self.now_angle_data
-                # after_len=len(self.accumulate_angle_data)
-                # print('After len=',after_len)
-                # self.num_of_active +=1
-                # print('num=',self.num_of_active)
-                # self.total_table_update()  #更新總表
+
             elif self.num_of_active <10 and self.num_of_active>0:
                 items=("1","2","3","4","5","6","7","8","9","10")
                 item,ok=QInputDialog.getItem(self,"紀錄姿態","與前一姿態間格數",items,0,False)
                 if ok:
-                    print('item=',item)
                     self.accumulate_angle_data += [int(item)]
                     self.encoder_and_send_pac([0,0,0, int(item)])
-
                     self.accumulate_angle_data += self.now_angle_data
-                    after_len=len(self.accumulate_angle_data)
-                    print('After len=',after_len)
                     self.num_of_active +=1
-                    print('num=',self.num_of_active)
                     self.total_table_update()  #更新總表
-                else:
-                    print('Cancel')
 
 
-
-    def del_lastest_angle(self):  #類似DEL鍵的功能
-        QMessageBox.about(self,"Sorry","很抱歉此功能被砍了")
-        # if self.num_of_active >0:
-        #     self.encoder_and_send_pac([0,0,0,7])
-        #     before_len=len(self.accumulate_angle_data)
-        #     print('Before len=',before_len)
-        #     self.accumulate_angle_data = self.accumulate_angle_data[0:(before_len-18)]
-        #     after_len=len(self.accumulate_angle_data)
-        #     print('After len=',after_len)
-        #     self.num_of_active -=1
-        #     print('num=',self.num_of_active)
-        #     self.total_table_update()  #更新總表
-        #
-        #     if self.num_of_active >=1:
-        #         #轉回上一個位置
-        #         tmp=len(self.accumulate_angle_data)-17
-        #         print('tmp=',tmp)
-        #         self.spinBox.setValue(self.accumulate_angle_data[tmp])
-        #         self.spinBox_1.setValue(self.accumulate_angle_data[tmp+1])
-        #         self.spinBox_2.setValue(self.accumulate_angle_data[tmp+2])
-        #         self.spinBox_3.setValue(self.accumulate_angle_data[tmp+3])
-        #         self.spinBox_4.setValue(self.accumulate_angle_data[tmp+4])
-        #         self.spinBox_5.setValue(self.accumulate_angle_data[tmp+5])
-        #         self.spinBox_6.setValue(self.accumulate_angle_data[tmp+6])
-        #         self.spinBox_7.setValue(self.accumulate_angle_data[tmp+7])
-        #         self.spinBox_8.setValue(self.accumulate_angle_data[tmp+8])
-        #         self.spinBox_9.setValue(self.accumulate_angle_data[tmp+9])
-        #         self.spinBox_10.setValue(self.accumulate_angle_data[tmp+10])
-        #         # self.spinBox_11.setValue(self.accumulate_angle_data[tmp+11])    #紅色4號殘障了QQ
-        #         self.spinBox_12.setValue(self.accumulate_angle_data[tmp+12])
-        #         self.spinBox_13.setValue(self.accumulate_angle_data[tmp+13])
-        #         self.spinBox_14.setValue(self.accumulate_angle_data[tmp+14])
-        #         self.spinBox_15.setValue(self.accumulate_angle_data[tmp+15])
-        #         self.spinBox_16.setValue(self.accumulate_angle_data[tmp+16])
-        #
-        # else:
-        #     QMessageBox.about(self,"Too Short","目前已經無暫存之動作串")
-
-    def del_all(self):  #清空accumulate_angle_data  #類似AC鍵的功能
+    def del_all(self):  #清空accumulate_angle_data
         if self.num_of_active >0:
-            # self.encoder_and_send_pac([0,0,0,8])
             self.accumulate_angle_data = []
             self.num_of_active =0
             self.total_table_update()  #更新總表
@@ -403,114 +291,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.about(self,"No Thing","本來就沒有暫存之動作串")
 
 
-    def save_to_PC(self):       #生成.txt
-        QMessageBox.about(self,"Sorry","很抱歉此功能暫時被砍了")
-        # if self.accumulate_angle_data !=[]:
-        #     fileName, _ =QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","(*.txt)")
-        #     if fileName:
-        #         print(fileName)
-        #         f = open(fileName, 'w', encoding = 'UTF-8')
-        #         data=self.accumulate_angle_data
-        #         for x in data:
-        #             if x==0:
-        #                 f.write('00')  #一定要兩位數才行嗎@@?
-        #                 f.write('\n')
-        #             else:
-        #                 f.write(hex(x)[2:])  #16進位去掉0x
-        #                 f.write('\n')
-        #         f.close()
-        #     print('動作串已儲存')
-        #     QMessageBox.about(self,"Save Success","動作串已儲存至電腦")
-        # else:
-        #     print('目前無佔存之動作串')
-        #     QMessageBox.about(self,"No Thing","尚無暫存之動作串")
-
-    def SomethingAfterAck(self,value):
-        self.dia_waiting.accept()  #將叫使用者不要亂動的對話窗關起來
-        print('value=',value)
-        if value== b'\x84':
-            QMessageBox.about(self,"Save Success","動作串已儲存至SD卡")
-        if value== b'\x83':
-            QMessageBox.about(self,"Done","SD卡中的套裝動作已播放完成")
-        if value== b'\x82':
-            QMessageBox.about(self,"Done","播放完成")
-        if value== b'\xff':
-            QMessageBox.about(self,"Error","很抱歉出現異常錯誤")
-
-    def save_to_SDC(self):
-        # if self.accumulate_angle_data !=[]:
-        items=("1","2","3","4","5","6","7","8")
-        item,ok=QInputDialog.getItem(self,"SDC open file","選擇編號1~8",items,0,False)
-        if ok and item:
-            print('select=',item)
-            data=[0,0,0,10+int(item)]
-            self.ack.start()
-            self.dia_waiting.show()
-            self.encoder_and_send_pac(data)
-        else :
-            print('Cancel')
-        # else:
-            # print('目前無佔存之動作串')
-            # QMessageBox.about(self,"No Thing","尚無暫存之動作串")
-
-    def play(self):   #CloseFile
+    def closefile(self):   #CloseFile
         if self.accumulate_angle_data !=[]:
             data=[0,0,0,19]        #command=19
-            self.ack.start()
-            self.dia_waiting.show()
+            # self.dia_waiting.show()
             self.encoder_and_send_pac(data)
         else:
-            print('目前無佔存之動作串')
-            QMessageBox.about(self,"No Thing","尚無暫存之動作串")
-
-    def open_file(self):    #匯入先前檔案
-        QMessageBox.about(self,"Sorry","很抱歉此功能暫時被砍了")
-        # self.accumulate_angle_data=[]  #暫存動作先歸零
-        # self.num_of_active=0  #也先歸零
-        # dlg=QFileDialog()
-        # if dlg.exec_():
-        #     filenames=dlg.selectedFiles()
-        #     f=open(filenames[0],'r')
-        #     while True:
-        #         line = f.readline()
-        #         if not line: break
-        #         self.accumulate_angle_data += [int(line,16)]  # hex->int
-        #         self.num_of_active= int(len(self.accumulate_angle_data)/17)
-        #         self.total_table_update()
-        #     f.close()
-        #
-        #     #詢問要不要轉到資料最後的位置
-        #     reply=QMessageBox.question(self,"Ask","請問要不要轉到最後一個位置",QMessageBox.Yes|QMessageBox.No)
-        #     print('Reply=',reply)
-        #     if reply==16384:  #User Press 'Yes'
-        #         #轉到最後一個位置
-        #         tmp=len(self.accumulate_angle_data)-17
-        #         print('tmp=',tmp)
-        #         self.spinBox.setValue(self.accumulate_angle_data[tmp])
-        #         self.spinBox_1.setValue(self.accumulate_angle_data[tmp+1])
-        #         self.spinBox_2.setValue(self.accumulate_angle_data[tmp+2])
-        #         self.spinBox_3.setValue(self.accumulate_angle_data[tmp+3])
-        #         self.spinBox_4.setValue(self.accumulate_angle_data[tmp+4])
-        #         self.spinBox_5.setValue(self.accumulate_angle_data[tmp+5])
-        #         self.spinBox_6.setValue(self.accumulate_angle_data[tmp+6])
-        #         self.spinBox_7.setValue(self.accumulate_angle_data[tmp+7])
-        #         self.spinBox_8.setValue(self.accumulate_angle_data[tmp+8])
-        #         self.spinBox_9.setValue(self.accumulate_angle_data[tmp+9])
-        #         self.spinBox_10.setValue(self.accumulate_angle_data[tmp+10])
-        #         # self.spinBox_11.setValue(self.accumulate_angle_data[tmp+11])    #紅色4號殘障了QQ
-        #         self.spinBox_12.setValue(self.accumulate_angle_data[tmp+12])
-        #         self.spinBox_13.setValue(self.accumulate_angle_data[tmp+13])
-        #         self.spinBox_14.setValue(self.accumulate_angle_data[tmp+14])
-        #         self.spinBox_15.setValue(self.accumulate_angle_data[tmp+15])
-        #         self.spinBox_16.setValue(self.accumulate_angle_data[tmp+16])
-        #         self.now_angle_data=self.accumulate_angle_data[tmp:]
+            QMessageBox.about(self,"No Thing","尚未開啟SDC檔案")
 
 
-
-
-
-
-
+    def make_excel(self):
+        options = QFileDialog.Options()
+        fileName, _=QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","","(*.xlsx)", options=options)
+        if fileName:
+            print('filename=',fileName)
+            wb = Workbook()# 創建一個工作薄
+            sheet = wb.active# 創建一個工作表(注意是一個屬性)
+            sheet.title = 'create_sheet'# excel創建的工作表名默認為sheet1,一下代碼實現了給新創建的工作表創建一個新的名字
+            sheet['A19'] = '間格'
+            for i in range(17):
+                sheet.cell(row=i+2,column=1,value='ID %d'%i)
+            for j in range(18):
+                sheet.cell(row=1,column=j+2,value='定格 %d'%(j+1))
+            self.accumulate_angle_data +=['#']
+            for i in range(18):
+                for j in range(self.num_of_active):
+                    sheet.cell(row=i+2,column=j+2,value=self.accumulate_angle_data[18*j+i])
+            self.accumulate_angle_data.pop()
+            wb.save('create_excel.xlsx')# 保存一個文檔
+            shutil.move("create_excel.xlsx",fileName)
 
 
 

@@ -50,5 +50,4 @@ opts = [
 
 if __name__ == '__main__':
     PyInstaller.__main__.run(opts)
-    copyfile(icon.ico, icon.ico)
-    copyfile(_background.jpg, _background.jpg)
+    
