@@ -84,9 +84,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.ack.AAACCCKKK.connect(self.SomethingAfterAck)
         self.dia_waiting=QDialog()  #等待ack時叫使用者不要亂動的對話窗
         self.delay=0.05 #通訊速率從這裡改
-        self.now_angle_data=[35,35,45,40,67,40,60,49,42,35,49,0,75,41,40,40,68]
+        self.now_angle_data=[3500,3500,4500,4000,6700,4000,6000,4900,4200,3500,4900,0,7500,4100,4000,4000,6800]
+        self.last=[3500,3500,4500,4000,6700,4000,6000,4900,4200,3500,4900,0,7500,4100,4000,4000,6800]
         self.accumulate_angle_data=[]
         self.num_of_active=0
+        self.flag=0;#旗標@@
         self.setting()
         self.vision_effect()
         self.control_object()
@@ -104,15 +106,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         time.sleep(5)
 
     def what_is_type(self,data):   #幫通訊封包定義的type
-        if (data[0] or data[1])!=0 and data[2]==0:
-            return 1  #學習訊息(單動角度)
-        elif (data[0] or data[1])==0 and data[2]!=0:
-            return 2  #命令訊息
-        else:
-            return False
+        return 1
 
     def encoder_and_send_pac(self,data):  #通訊封包
-        print('data=',data[0],data[1],data[2])
+        tmp=data[1]<<8
+        tmp=tmp+data[2]
+        print('data=',data[0],tmp,data[3])
         pac=[]
         pac +=  [253]  #Header=0xfd
         typeeeee= self.what_is_type(data)
@@ -138,19 +137,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.lcdNumber.display(self.num_of_active) #LCD顯示值更新
         for x in range(180):
             if x < len(self.accumulate_angle_data):
-                if self.accumulate_angle_data[x]<=5 and self.accumulate_angle_data[x]>=1:
-                    if self.accumulate_angle_data[x]==1:
-                        itemmm=QTableWidgetItem('很快')
-                    elif self.accumulate_angle_data[x]==2:
-                        itemmm=QTableWidgetItem('快')
-                    elif self.accumulate_angle_data[x]==3:
-                        itemmm=QTableWidgetItem('正常')
-                    elif self.accumulate_angle_data[x]==4:
-                        itemmm=QTableWidgetItem('慢')
-                    elif self.accumulate_angle_data[x]==5:
-                        itemmm=QTableWidgetItem('很慢')
-                else:
-                    itemmm=QTableWidgetItem(str(self.accumulate_angle_data[x]))
+                itemmm=QTableWidgetItem(str(self.accumulate_angle_data[x]))
                 itemmm.setTextAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
                 self.tableWidget.setItem(x%18,int(x/18),itemmm)
             else:
@@ -194,88 +181,130 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_14.valueChanged['int'].connect(self.ID_14)
         self.spinBox_15.valueChanged['int'].connect(self.ID_15)
         self.spinBox_16.valueChanged['int'].connect(self.ID_16)
+        # self.spinBox.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_1.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_2.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_3.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_4.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_5.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_6.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_7.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_8.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_9.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_10.valueChanged['int'].connect(self.ID_with_Angle)
+        # # self.spinBox_11.valueChanged['int'].connect(self.ID_with_Angle)  #紅色4號殘障了QQ
+        # self.spinBox_12.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_13.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_14.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_15.valueChanged['int'].connect(self.ID_with_Angle)
+        # self.spinBox_16.valueChanged['int'].connect(self.ID_with_Angle)
+
 
     def SimulateRemoteControl(self,value):   #遙控器送訊的地方
         print('YouPress=',value)
         self.ack.start()
         self.dia_waiting.show()
-        self.encoder_and_send_pac([0,0,20+value])
+        self.encoder_and_send_pac([0,0,0,20+value])
+
+    # def ID_with_Angle(self):
+    #     self.last[0]=self.spinBox.value()
+    #     self.last[1]=self.spinBox_1.value()
+    #     self.last[2]=self.spinBox_2.value()
+    #     self.last[3]=self.spinBox_3.value()
+    #     self.last[4]=self.spinBox_4.value()
+    #     self.last[5]=self.spinBox_5.value()
+    #     self.last[6]=self.spinBox_6.value()
+    #     self.last[7]=self.spinBox_7.value()
+    #     self.last[8]=self.spinBox_8.value()
+    #     self.last[9]=self.spinBox_9.value()
+    #     self.last[10]=self.spinBox_10.value()
+    #     self.last[11]=self.spinBox_11.value()
+    #     self.last[12]=self.spinBox_12.value()
+    #     self.last[13]=self.spinBox_13.value()
+    #     self.last[14]=self.spinBox_14.value()
+    #     self.last[15]=self.spinBox_15.value()
+    #     self.last[16]=self.spinBox_16.value()
+    #
+    #     for x in range(17):
+    #         if self.last[x] != self.now_angle_data[x]:
+    #             print(x,self.last[x])
+    #             self.encoder_and_send_pac([x,self.last[x]>>8,self.last[x]&255,0])
+    #             self.now_angle_data[x]= self.last[x]
 
     def ID_0(self):
-        self.encoder_and_send_pac([0,self.spinBox.value(),0])
+        self.encoder_and_send_pac([0,self.spinBox.value()>>8,self.spinBox.value()&255,0])
         self.now_angle_data[0]=self.spinBox.value()
     def ID_1(self):
-        self.encoder_and_send_pac([1,self.spinBox_1.value(),0])
+        self.encoder_and_send_pac([1,self.spinBox_1.value()>>8,self.spinBox_1.value()&255,0])
         self.now_angle_data[1]=self.spinBox_1.value()
     def ID_2(self):
-        self.encoder_and_send_pac([2,self.spinBox_2.value(),0])
+        self.encoder_and_send_pac([2,self.spinBox_2.value()>>8,self.spinBox_2.value()&255,0])
         self.now_angle_data[2]=self.spinBox_2.value()
     def ID_3(self):
-        self.encoder_and_send_pac([3,self.spinBox_3.value(),0])
+        self.encoder_and_send_pac([3,self.spinBox_3.value()>>8,self.spinBox_3.value()&255,0])
         self.now_angle_data[3]=self.spinBox_3.value()
     def ID_4(self):
-        self.encoder_and_send_pac([4,self.spinBox_4.value(),0])
+        self.encoder_and_send_pac([4,self.spinBox_4.value()>>8,self.spinBox_4.value()&255,0])
         self.now_angle_data[4]=self.spinBox_4.value()
     def ID_5(self):
-        self.encoder_and_send_pac([5,self.spinBox_5.value(),0])
+        self.encoder_and_send_pac([5,self.spinBox_5.value()>>8,self.spinBox_5.value()&255,0])
         self.now_angle_data[5]=self.spinBox_5.value()
     def ID_6(self):
-        self.encoder_and_send_pac([6,self.spinBox_6.value(),0])
+        self.encoder_and_send_pac([6,self.spinBox_6.value()>>8,self.spinBox_6.value()&255,0])
         self.now_angle_data[6]=self.spinBox_6.value()
     def ID_7(self):
-        self.encoder_and_send_pac([7,self.spinBox_7.value(),0])
+        self.encoder_and_send_pac([7,self.spinBox_7.value()>>8,self.spinBox_7.value()&255,0])
         self.now_angle_data[7]=self.spinBox_7.value()
     def ID_8(self):
-        self.encoder_and_send_pac([8,self.spinBox_8.value(),0])
+        self.encoder_and_send_pac([8,self.spinBox_8.value()>>8,self.spinBox_8.value()&255,0])
         self.now_angle_data[8]=self.spinBox_8.value()
     def ID_9(self):
-        self.encoder_and_send_pac([9,self.spinBox_9.value(),0])
+        self.encoder_and_send_pac([9,self.spinBox_9.value()>>8,self.spinBox_9.value()&255,0])
         self.now_angle_data[9]=self.spinBox_9.value()
     def ID_10(self):
-        self.encoder_and_send_pac([10,self.spinBox_10.value(),0])
+        self.encoder_and_send_pac([10,self.spinBox_10.value()>>8,self.spinBox_10.value()&255,0])
         self.now_angle_data[10]=self.spinBox_10.value()
     # def ID_11(self):     #紅色4號殘障了QQ
-    #     self.encoder_and_send_pac([11,self.spinBox_11.value(),0])
+    #     self.encoder_and_send_pac([11,self.spinBox_11.value()>>8,self.spinBox_11.value()&255,0])
     #     self.now_angle_data[11]=self.spinBox_11.value()
     def ID_12(self):
-        self.encoder_and_send_pac([12,self.spinBox_12.value(),0])
+        self.encoder_and_send_pac([12,self.spinBox_12.value()>>8,self.spinBox_12.value()&255,0])
         self.now_angle_data[12]=self.spinBox_12.value()
     def ID_13(self):
-        self.encoder_and_send_pac([13,self.spinBox_13.value(),0])
+        self.encoder_and_send_pac([13,self.spinBox_13.value()>>8,self.spinBox_13.value()&255,0])
         self.now_angle_data[13]=self.spinBox_13.value()
     def ID_14(self):
-        self.encoder_and_send_pac([14,self.spinBox_14.value(),0])
+        self.encoder_and_send_pac([14,self.spinBox_14.value()>>8,self.spinBox_14.value()&255,0])
         self.now_angle_data[14]=self.spinBox_14.value()
     def ID_15(self):
-        self.encoder_and_send_pac([15,self.spinBox_15.value(),0])
+        self.encoder_and_send_pac([15,self.spinBox_15.value()>>8,self.spinBox_15.value()&255,0])
         self.now_angle_data[15]=self.spinBox_15.value()
     def ID_16(self):
-        self.encoder_and_send_pac([16,self.spinBox_16.value(),0])
+        self.encoder_and_send_pac([16,self.spinBox_16.value()>>8,self.spinBox_16.value()&255,0])
         self.now_angle_data[16]=self.spinBox_16.value()
 
 
     def to_the_best_position(self):  #強迫轉到最佳位置
-        self.now_angle_data=[75,86,95,47,73,75,90,83,75,64,55,0,77,75,60,67,75]
-        # for x in range(17):
-        #     if x != 11:
-        #         self.encoder_and_send_pac([128,x,self.now_angle_data[x]])
-        self.spinBox.setValue(75)
-        self.spinBox_1.setValue(86)
-        self.spinBox_2.setValue(95)
-        self.spinBox_3.setValue(47)
-        self.spinBox_4.setValue(73)
-        self.spinBox_5.setValue(75)
-        self.spinBox_6.setValue(90)
-        self.spinBox_7.setValue(83)
-        self.spinBox_8.setValue(75)
-        self.spinBox_9.setValue(64)
-        self.spinBox_10.setValue(55)
-        # self.spinBox_11.setValue(103)    #紅色4號殘障了QQ
-        self.spinBox_12.setValue(77)
-        self.spinBox_13.setValue(75)
-        self.spinBox_14.setValue(60)
-        self.spinBox_15.setValue(67)
-        self.spinBox_16.setValue(75)
+        self.now_angle_data=[7500,8600,9500,4700,7300,7500,9000,8300,7500,6400,5500,0,7700,7500,6000,6700,7500]
+        data=[0,0,0,31]
+        self.encoder_and_send_pac(data)
+        self.spinBox.setValue(7500)
+        self.spinBox_1.setValue(8600)
+        self.spinBox_2.setValue(9500)
+        self.spinBox_3.setValue(4700)
+        self.spinBox_4.setValue(7300)
+        self.spinBox_5.setValue(7500)
+        self.spinBox_6.setValue(9000)
+        self.spinBox_7.setValue(8300)
+        self.spinBox_8.setValue(7500)
+        self.spinBox_9.setValue(6400)
+        self.spinBox_10.setValue(5500)
+        # self.spinBox_11.setValue(10300)    #紅色4號殘障了QQ
+        self.spinBox_12.setValue(7700)
+        self.spinBox_13.setValue(7500)
+        self.spinBox_14.setValue(6000)
+        self.spinBox_15.setValue(6700)
+        self.spinBox_16.setValue(7500)
 
     def note_now_angle(self):  #更新accumulate_angle_data
         if self.num_of_active >=10:
@@ -286,7 +315,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 item,ok=QInputDialog.getItem(self,"SDC open file","選擇編號1~8",items,0,False)
                 if ok and item:
                     print('select=',item)
-                    data=[0,0,10+int(item)]
+                    data=[0,0,0,10+int(item)]
                     self.ack.start()
                     self.dia_waiting.show()
                     self.encoder_and_send_pac(data)
@@ -298,7 +327,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.total_table_update()  #更新總表
                 else :
                     print('Cancel')
-                # self.encoder_and_send_pac([0,0,6])
+                # self.encoder_and_send_pac([0,0,0,6])
                 # QMessageBox.about(self,"Have Recorded","已記錄")
                 # self.accumulate_angle_data += self.now_angle_data
                 # after_len=len(self.accumulate_angle_data)
@@ -307,25 +336,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # print('num=',self.num_of_active)
                 # self.total_table_update()  #更新總表
             elif self.num_of_active <10 and self.num_of_active>0:
-                items=("很快","快","正常","慢","很慢")
-                item,ok=QInputDialog.getItem(self,"紀錄姿態","與前一姿態間格",items,0,False)
+                items=("1","2","3","4","5","6","7","8","9","10")
+                item,ok=QInputDialog.getItem(self,"紀錄姿態","與前一姿態間格數",items,0,False)
                 if ok:
                     print('item=',item)
-                    if item=='很快':
-                        self.accumulate_angle_data +=[1]
-                        self.encoder_and_send_pac([0,0,1])
-                    elif item=='快':
-                        self.accumulate_angle_data +=[2]
-                        self.encoder_and_send_pac([0,0,2])
-                    elif item=='正常':
-                        self.accumulate_angle_data +=[3]
-                        self.encoder_and_send_pac([0,0,3])
-                    elif item=='慢':
-                        self.accumulate_angle_data +=[4]
-                        self.encoder_and_send_pac([0,0,4])
-                    elif item=='很慢':
-                        self.accumulate_angle_data +=[5]
-                        self.encoder_and_send_pac([0,0,5])
+                    self.accumulate_angle_data += [int(item)]
+                    self.encoder_and_send_pac([0,0,0, int(item)])
+
                     self.accumulate_angle_data += self.now_angle_data
                     after_len=len(self.accumulate_angle_data)
                     print('After len=',after_len)
@@ -338,45 +355,46 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def del_lastest_angle(self):  #類似DEL鍵的功能
-        if self.num_of_active >0:
-            self.encoder_and_send_pac([0,0,7])
-            before_len=len(self.accumulate_angle_data)
-            print('Before len=',before_len)
-            self.accumulate_angle_data = self.accumulate_angle_data[0:(before_len-18)]
-            after_len=len(self.accumulate_angle_data)
-            print('After len=',after_len)
-            self.num_of_active -=1
-            print('num=',self.num_of_active)
-            self.total_table_update()  #更新總表
-
-            if self.num_of_active >=1:
-                #轉回上一個位置
-                tmp=len(self.accumulate_angle_data)-17
-                print('tmp=',tmp)
-                self.spinBox.setValue(self.accumulate_angle_data[tmp])
-                self.spinBox_1.setValue(self.accumulate_angle_data[tmp+1])
-                self.spinBox_2.setValue(self.accumulate_angle_data[tmp+2])
-                self.spinBox_3.setValue(self.accumulate_angle_data[tmp+3])
-                self.spinBox_4.setValue(self.accumulate_angle_data[tmp+4])
-                self.spinBox_5.setValue(self.accumulate_angle_data[tmp+5])
-                self.spinBox_6.setValue(self.accumulate_angle_data[tmp+6])
-                self.spinBox_7.setValue(self.accumulate_angle_data[tmp+7])
-                self.spinBox_8.setValue(self.accumulate_angle_data[tmp+8])
-                self.spinBox_9.setValue(self.accumulate_angle_data[tmp+9])
-                self.spinBox_10.setValue(self.accumulate_angle_data[tmp+10])
-                # self.spinBox_11.setValue(self.accumulate_angle_data[tmp+11])    #紅色4號殘障了QQ
-                self.spinBox_12.setValue(self.accumulate_angle_data[tmp+12])
-                self.spinBox_13.setValue(self.accumulate_angle_data[tmp+13])
-                self.spinBox_14.setValue(self.accumulate_angle_data[tmp+14])
-                self.spinBox_15.setValue(self.accumulate_angle_data[tmp+15])
-                self.spinBox_16.setValue(self.accumulate_angle_data[tmp+16])
-
-        else:
-            QMessageBox.about(self,"Too Short","目前已經無暫存之動作串")
+        QMessageBox.about(self,"Sorry","很抱歉此功能被砍了")
+        # if self.num_of_active >0:
+        #     self.encoder_and_send_pac([0,0,0,7])
+        #     before_len=len(self.accumulate_angle_data)
+        #     print('Before len=',before_len)
+        #     self.accumulate_angle_data = self.accumulate_angle_data[0:(before_len-18)]
+        #     after_len=len(self.accumulate_angle_data)
+        #     print('After len=',after_len)
+        #     self.num_of_active -=1
+        #     print('num=',self.num_of_active)
+        #     self.total_table_update()  #更新總表
+        #
+        #     if self.num_of_active >=1:
+        #         #轉回上一個位置
+        #         tmp=len(self.accumulate_angle_data)-17
+        #         print('tmp=',tmp)
+        #         self.spinBox.setValue(self.accumulate_angle_data[tmp])
+        #         self.spinBox_1.setValue(self.accumulate_angle_data[tmp+1])
+        #         self.spinBox_2.setValue(self.accumulate_angle_data[tmp+2])
+        #         self.spinBox_3.setValue(self.accumulate_angle_data[tmp+3])
+        #         self.spinBox_4.setValue(self.accumulate_angle_data[tmp+4])
+        #         self.spinBox_5.setValue(self.accumulate_angle_data[tmp+5])
+        #         self.spinBox_6.setValue(self.accumulate_angle_data[tmp+6])
+        #         self.spinBox_7.setValue(self.accumulate_angle_data[tmp+7])
+        #         self.spinBox_8.setValue(self.accumulate_angle_data[tmp+8])
+        #         self.spinBox_9.setValue(self.accumulate_angle_data[tmp+9])
+        #         self.spinBox_10.setValue(self.accumulate_angle_data[tmp+10])
+        #         # self.spinBox_11.setValue(self.accumulate_angle_data[tmp+11])    #紅色4號殘障了QQ
+        #         self.spinBox_12.setValue(self.accumulate_angle_data[tmp+12])
+        #         self.spinBox_13.setValue(self.accumulate_angle_data[tmp+13])
+        #         self.spinBox_14.setValue(self.accumulate_angle_data[tmp+14])
+        #         self.spinBox_15.setValue(self.accumulate_angle_data[tmp+15])
+        #         self.spinBox_16.setValue(self.accumulate_angle_data[tmp+16])
+        #
+        # else:
+        #     QMessageBox.about(self,"Too Short","目前已經無暫存之動作串")
 
     def del_all(self):  #清空accumulate_angle_data  #類似AC鍵的功能
         if self.num_of_active >0:
-            self.encoder_and_send_pac([0,0,8])
+            # self.encoder_and_send_pac([0,0,0,8])
             self.accumulate_angle_data = []
             self.num_of_active =0
             self.total_table_update()  #更新總表
@@ -425,7 +443,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         item,ok=QInputDialog.getItem(self,"SDC open file","選擇編號1~8",items,0,False)
         if ok and item:
             print('select=',item)
-            data=[0,0,10+int(item)]
+            data=[0,0,0,10+int(item)]
             self.ack.start()
             self.dia_waiting.show()
             self.encoder_and_send_pac(data)
@@ -435,9 +453,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # print('目前無佔存之動作串')
             # QMessageBox.about(self,"No Thing","尚無暫存之動作串")
 
-    def play(self):   #試播
+    def play(self):   #CloseFile
         if self.accumulate_angle_data !=[]:
-            data=[0,0,9]        #command=9
+            data=[0,0,0,19]        #command=19
             self.ack.start()
             self.dia_waiting.show()
             self.encoder_and_send_pac(data)

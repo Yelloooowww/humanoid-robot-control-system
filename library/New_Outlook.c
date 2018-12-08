@@ -1,6 +1,11 @@
-//20181203
-//學習mode SDC read/write 播放功能 皆測試成功 Congratulations!!!
-//訊號正確可是黃色腳偶爾會亂動
+// 1208測試 
+// 人機角度精度3500~11500
+// 內插間格1~10
+// 最佳位置勉強可以用
+// 可以播放10筆以上資料
+// 資料寫入SD卡有一點點機率會失敗QQ
+// 有些軸還是會亂動 有可能因為電池快沒電了
+
 #include "ASA_Lib.h"
 #include <avr/interrupt.h>
 #include <math.h>
@@ -41,74 +46,34 @@ unsigned int  SDC_FIFO_max=10;//for FIFO
 unsigned int  SDC_FIFO_rear=9;//for FIFO
 unsigned int  SDC_FIFO_front=9;//for FIFO
 uint16_t KONDO_SDC_FIFO[10][17];//姿態FIFO
-// char PutIn(uint16_t *p){
-//   if((SDC_FIFO_rear+1)%SDC_FIFO_max==SDC_FIFO_front){
-//     // printf("FIFO Is FULL\n" );
-//     return 1;
-//   }else{
-//     // printf("put in\n" );
-//     SDC_FIFO_rear=(SDC_FIFO_rear+1)%SDC_FIFO_max;
-//     printf("*(p+i)= " );
-//     for(int i=0;i<17;i++){
-//       printf("%d ",*(p+i) );
-//       KONDO_SDC_FIFO[i][SDC_FIFO_rear]=*(p+i);
-//     }
-//     printf("___________________\n" );
-//   }
-//   // printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
-//   return 0;
-// }
-//
-// char TakeOut(uint16_t *t){
-//   if(SDC_FIFO_front == SDC_FIFO_rear){
-//     // printf("FIFO Is Empty\n");
-//     return 1;
-//   }else{
-//     // printf("take out\n" );
-//     SDC_FIFO_front=(SDC_FIFO_front+1)%SDC_FIFO_max;
-//     printf("*(t+i)= " );
-//     for(int i=0;i<17;i++){
-//       *(t+i)=KONDO_SDC_FIFO[i][SDC_FIFO_front];
-//       printf("%d ",*(t+i));
-//     }
-//     printf("___________________\n" );
-//   }
-//   // printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
-//   return 0;
-// }
 unsigned char FIFO_flag;//for FIFO
 char PutIn(uint16_t *p){
 	SDC_FIFO_rear=(SDC_FIFO_rear+1) % SDC_FIFO_max; //第一次進來，SDC_FIFO_rear=0;第二次進來，SDC_FIFO_rear=1....
   if(SDC_FIFO_front == SDC_FIFO_rear)
 	{
-		if(SDC_FIFO_rear == 0)
-		{SDC_FIFO_rear=SDC_FIFO_max-1;}
-		else
-		{
-			SDC_FIFO_rear=SDC_FIFO_rear-1;
-			printf("FIFO Is FULL\n" );
-	    return 1;
-		}
+    // if(SDC_FIFO_rear == 0)
+		// {SDC_FIFO_rear=SDC_FIFO_max-1;}
+		// else
+		// {
+		// 	SDC_FIFO_rear=SDC_FIFO_rear-1;
+		// 	printf("FIFO Is FULL\n" );
+	  //   return 1;
+		// }
+		SDC_FIFO_rear=((SDC_FIFO_rear-1)+SDC_FIFO_max)%10;
+    return 1;
   }
 	else
 	{
     printf("put in\n" );
     // SDC_FIFO_rear=(SDC_FIFO_rear+1)%SDC_FIFO_max;
-    printf("*(p+i)= " );
     for(int i=0;i<17;i++)
-		{
-      KONDO_SDC_FIFO[SDC_FIFO_rear][i]=*(p+i);
-      printf("*%d ", *(p+i));
+		{KONDO_SDC_FIFO[SDC_FIFO_rear][i]=*(p+i);
+      printf("*%d ",*(p+i) );
     }
-    printf("\n" );
 		FIFO_flag=1;
-
 		printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
-		return 0;
-
   }
-
-
+  return 0;
 }//void PutIn(uint8_t *p)
 
 
@@ -120,20 +85,17 @@ char TakeOut(uint16_t *t){
   }
 	else
 	{
-		if(FIFO_flag==1)
-		{
+		// if(FIFO_flag==1)
+		// {
     printf("take out\n" );
     SDC_FIFO_front=(SDC_FIFO_front+1)%SDC_FIFO_max;
-    printf("*(t+i)= " );
     for(int i=0;i<17;i++)
-		{
-      *(t+i)=KONDO_SDC_FIFO[SDC_FIFO_front][i];
-      printf("^%d ",*(t+i) );
+		{*(t+i)=KONDO_SDC_FIFO[SDC_FIFO_front][i];
+      printf("^%d ", *(t+i));
     }
-    printf("\n" );
 		printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
 		return 0;
-		}
+		// }
 
   }
 
@@ -142,9 +104,9 @@ char TakeOut(uint16_t *t){
 // decoder~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef enum {Header,Bytes,type,Data,checksum}state;
 state now_state;//解包狀態
-uint8_t get[3];//for my_decoder
+uint8_t get[4];//for my_decoder
 void my_decoder(uint8_t u){
-  static uint8_t b,d,sum_check;
+  static uint16_t b,d,sum_check;
   static uint16_t len_data;
   switch (now_state) {
     case Header:{
@@ -197,6 +159,7 @@ void my_decoder(uint8_t u){
       // printf("decoder_checksum___\n" );
       uint8_t tmp=(sum_check&0xff);
       if(tmp == u){
+        printf("get=%d %d %d %d\n",get[0],get[1],get[2],get[3] );
         messenger_dealer();
         now_state=Header;
       }else{
@@ -210,29 +173,30 @@ void my_decoder(uint8_t u){
 struct FIFO_for_angle{
   uint8_t index_start;//存到哪
   uint8_t index_end;//處理到哪
-  uint8_t container[10][2];//伺服機設定角度
+  uint16_t container[10][2];//伺服機設定角度
 }angle_FIFO={-1,-1,{{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}}};
 void messenger_dealer(){//訊息交換機MCU
-  if(get[2]>=21 && get[2]<=28){// 切入控制mode 播放連續動作
-    action_num=get[2]-20;//動作編號
+  if(get[3]>=21 && get[3]<=28){// 切入控制mode 播放連續動作
+    action_num=get[3]-20;//動作編號
     mode=1;// 切入控制mode
     printf("mode=1!!!\n" );
   }else{
-    if((get[0]|get[1])!=0 ){//前兩byte資料為 伺服機設定角度
+    if((get[0]|get[1]|get[2])!=0 ){//前兩byte資料為 伺服機設定角度
       while ((angle_FIFO.index_start+1)%10 == angle_FIFO.index_end) {
         printf("FIFO_for_angle is FULL\n" );
       }
+      uint16_t angle=get[1]<<8;
+      angle += get[2];
       angle_FIFO.index_start=(angle_FIFO.index_start+1)%10;
       angle_FIFO.container[0][angle_FIFO.index_start]=get[0];
-      angle_FIFO.container[1][angle_FIFO.index_start]=get[1];
+      angle_FIFO.container[1][angle_FIFO.index_start]=angle;
     }
-    command=get[2];
+    command=get[3];
     mode=0;
     printf("mode=0!!!\n" );
   }
 }
 // SDC~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int data[100];
 unsigned int SDC_data[10];
 void KONDO_SDC_read(uint8_t code)
 {
@@ -531,18 +495,26 @@ void command_processor(uint8_t *c){//監控命令處理器
       if( *c <=18 && *c>=11){
         printf("OpenFile(%d)_________________\n", *c -10);
         KONDO_SDC_write( *c -10);
-        printf("KONDO_SDC_write_______OpenFileDone_________\n");
+        printf("OpenFileDone_________KONDO_SDC_write_______\n");
       }
-      if( *c<=5 && *c>=1){
+      if( *c<=10 && *c>=1){
         printf("Record with Grid=%d_________\n", *c );
         KONDO_SDC_write( *c );
-        printf("KONDO_SDC_write_______Done_________\n");
+        printf("Done__KONDO_SDC_write_______\n");
       }
-      if( *c ==9) {
+      if( *c ==19) {
         printf("CloseFile_________________\n");
-        KONDO_SDC_write( *c);
-        printf("KONDO_SDC_write_______CloseFileDone_________\n");
+        KONDO_SDC_write( *c -10);
+        printf("CloseFileDone_________KONDO_SDC_write_______\n");
 
+      }
+      if( *c ==31){
+        printf("The Best Position\n" );
+
+        uint16_t Good[17]={7500,8600,9500,4700,7300,7500,9000,8300,7500,6400,5500,0,7700,7500,6000,6700,7500};
+        for(int i=0;i<17;i++) now[i]=Good[i];
+        PutIn(Good);
+        printf("DONE___The Best Position___\n" );
       }
       *c =0;
   }
@@ -556,9 +528,9 @@ void robot_gesture_player(){//機器人姿態播放器
       // printf("index_end = %d\n", angle_FIFO.index_end);
       for(int i=0;i<17;i++) tmp[i]=now[i];
       uint8_t ID=angle_FIFO.container[0][angle_FIFO.index_end];
-      uint8_t a=angle_FIFO.container[1][angle_FIFO.index_end];
+      uint16_t a=angle_FIFO.container[1][angle_FIFO.index_end];
       printf("ID=%d to angle=%d\n",ID,a );
-      tmp[ID]=a*100;
+      tmp[ID]=a;
       PutIn(tmp);
     }
 
@@ -595,11 +567,12 @@ void KONDO_transmit(){
     PORTB |= (1<<PB6);   //洞洞板通道開啟(洞洞板轉到2)
     PORTB &= ~(1<<PB7);
     PORTB &= ~(1<<PB5);
-
+    _delay_ms(1);
     for(int i = 0;i < 17; i++){
       //判斷ID，決定致能左或右
       if(i > 8){  //0~8
         PORTF = 191;
+        _delay_ms(1);
         // PORTF = 127;
         while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
         UDR1 = Servo_ID[i-8] + 128;
@@ -609,6 +582,7 @@ void KONDO_transmit(){
         UDR1 = Take[i]&127;
       }else{
         PORTF = 127;
+        _delay_ms(1);
         // PORTF = 191;  //9~16
         while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
         UDR1 = Servo_ID[i] + 128;

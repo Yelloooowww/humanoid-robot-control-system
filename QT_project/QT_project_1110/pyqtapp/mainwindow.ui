@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -61,10 +61,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>68</number>
+           <number>6800</number>
           </property>
           <property name="maximum">
-           <number>108</number>
+           <number>10800</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -74,10 +74,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_16">
           <property name="minimum">
-           <number>68</number>
+           <number>6800</number>
           </property>
           <property name="maximum">
-           <number>108</number>
+           <number>10800</number>
           </property>
          </widget>
         </item>
@@ -115,10 +115,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>40</number>
+           <number>4000</number>
           </property>
           <property name="maximum">
-           <number>83</number>
+           <number>8300</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -128,10 +128,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_3">
           <property name="minimum">
-           <number>40</number>
+           <number>4000</number>
           </property>
           <property name="maximum">
-           <number>83</number>
+           <number>8300</number>
           </property>
          </widget>
         </item>
@@ -169,10 +169,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>49</number>
+           <number>4900</number>
           </property>
           <property name="maximum">
-           <number>110</number>
+           <number>11000</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -182,10 +182,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_7">
           <property name="minimum">
-           <number>49</number>
+           <number>4900</number>
           </property>
           <property name="maximum">
-           <number>110</number>
+           <number>11000</number>
           </property>
          </widget>
         </item>
@@ -223,10 +223,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>60</number>
+           <number>6000</number>
           </property>
           <property name="maximum">
-           <number>110</number>
+           <number>11000</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -236,10 +236,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_6">
           <property name="minimum">
-           <number>60</number>
+           <number>6000</number>
           </property>
           <property name="maximum">
-           <number>110</number>
+           <number>11000</number>
           </property>
          </widget>
         </item>
@@ -277,10 +277,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>41</number>
+           <number>4100</number>
           </property>
           <property name="maximum">
-           <number>110</number>
+           <number>11000</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -290,10 +290,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_13">
           <property name="minimum">
-           <number>41</number>
+           <number>4100</number>
           </property>
           <property name="maximum">
-           <number>110</number>
+           <number>11000</number>
           </property>
          </widget>
         </item>
@@ -331,10 +331,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>75</number>
+           <number>7500</number>
           </property>
           <property name="maximum">
-           <number>83</number>
+           <number>8300</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -344,10 +344,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_12">
           <property name="minimum">
-           <number>75</number>
+           <number>7500</number>
           </property>
           <property name="maximum">
-           <number>83</number>
+           <number>8300</number>
           </property>
          </widget>
         </item>
@@ -385,10 +385,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>35</number>
+           <number>3500</number>
           </property>
           <property name="maximum">
-           <number>115</number>
+           <number>11500</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -398,10 +398,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_9">
           <property name="minimum">
-           <number>35</number>
+           <number>3500</number>
           </property>
           <property name="maximum">
-           <number>115</number>
+           <number>11500</number>
           </property>
          </widget>
         </item>
@@ -439,10 +439,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>67</number>
+           <number>6700</number>
           </property>
           <property name="maximum">
-           <number>110</number>
+           <number>11000</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -452,10 +452,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_11">
           <property name="minimum">
-           <number>67</number>
+           <number>6700</number>
           </property>
           <property name="maximum">
-           <number>110</number>
+           <number>11000</number>
           </property>
          </widget>
         </item>
@@ -493,10 +493,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>42</number>
+           <number>4200</number>
           </property>
           <property name="maximum">
-           <number>82</number>
+           <number>8200</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -506,10 +506,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_8">
           <property name="minimum">
-           <number>42</number>
+           <number>4200</number>
           </property>
           <property name="maximum">
-           <number>82</number>
+           <number>8200</number>
           </property>
          </widget>
         </item>
@@ -547,10 +547,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>45</number>
+           <number>4500</number>
           </property>
           <property name="maximum">
-           <number>101</number>
+           <number>10100</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -560,10 +560,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_2">
           <property name="minimum">
-           <number>45</number>
+           <number>4500</number>
           </property>
           <property name="maximum">
-           <number>101</number>
+           <number>10100</number>
           </property>
          </widget>
         </item>
@@ -601,10 +601,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>49</number>
+           <number>4900</number>
           </property>
           <property name="maximum">
-           <number>105</number>
+           <number>10500</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -614,10 +614,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_10">
           <property name="minimum">
-           <number>49</number>
+           <number>4900</number>
           </property>
           <property name="maximum">
-           <number>105</number>
+           <number>10500</number>
           </property>
          </widget>
         </item>
@@ -655,10 +655,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>40</number>
+           <number>4000</number>
           </property>
           <property name="maximum">
-           <number>101</number>
+           <number>10100</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -668,10 +668,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_15">
           <property name="minimum">
-           <number>40</number>
+           <number>4000</number>
           </property>
           <property name="maximum">
-           <number>101</number>
+           <number>10100</number>
           </property>
          </widget>
         </item>
@@ -709,10 +709,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>40</number>
+           <number>4000</number>
           </property>
           <property name="maximum">
-           <number>90</number>
+           <number>9000</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -722,10 +722,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_14">
           <property name="minimum">
-           <number>40</number>
+           <number>4000</number>
           </property>
           <property name="maximum">
-           <number>90</number>
+           <number>9000</number>
           </property>
          </widget>
         </item>
@@ -763,10 +763,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>35</number>
+           <number>3500</number>
           </property>
           <property name="maximum">
-           <number>115</number>
+           <number>11500</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -776,10 +776,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox">
           <property name="minimum">
-           <number>35</number>
+           <number>3500</number>
           </property>
           <property name="maximum">
-           <number>115</number>
+           <number>11500</number>
           </property>
          </widget>
         </item>
@@ -817,10 +817,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>40</number>
+           <number>4000</number>
           </property>
           <property name="maximum">
-           <number>109</number>
+           <number>10900</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -830,10 +830,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_5">
           <property name="minimum">
-           <number>40</number>
+           <number>4000</number>
           </property>
           <property name="maximum">
-           <number>109</number>
+           <number>10900</number>
           </property>
          </widget>
         </item>
@@ -871,10 +871,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>67</number>
+           <number>6700</number>
           </property>
           <property name="maximum">
-           <number>75</number>
+           <number>7500</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -884,10 +884,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_4">
           <property name="minimum">
-           <number>67</number>
+           <number>6700</number>
           </property>
           <property name="maximum">
-           <number>75</number>
+           <number>7500</number>
           </property>
          </widget>
         </item>
@@ -925,10 +925,10 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>35</number>
+           <number>3500</number>
           </property>
           <property name="maximum">
-           <number>115</number>
+           <number>11500</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -938,10 +938,10 @@
         <item>
          <widget class="QSpinBox" name="spinBox_1">
           <property name="minimum">
-           <number>35</number>
+           <number>3500</number>
           </property>
           <property name="maximum">
-           <number>115</number>
+           <number>11500</number>
           </property>
          </widget>
         </item>
@@ -1502,7 +1502,7 @@
      </palette>
     </property>
     <property name="text">
-     <string>播放</string>
+     <string>CloseFile</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_2">

@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/image">
-        <file>_background.jpg</file>
-        <file>icon.ico</file>
-        <file>waiting.gif</file>
-    </qresource>
-</RCC>
