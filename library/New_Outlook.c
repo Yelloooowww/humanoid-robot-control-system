@@ -1,4 +1,4 @@
-// 1208測試 
+// 1208測試
 // 人機角度精度3500~11500
 // 內插間格1~10
 // 最佳位置勉強可以用
@@ -159,7 +159,7 @@ void my_decoder(uint8_t u){
       // printf("decoder_checksum___\n" );
       uint8_t tmp=(sum_check&0xff);
       if(tmp == u){
-        printf("get=%d %d %d %d\n",get[0],get[1],get[2],get[3] );
+        // printf("get=%d %d %d %d\n",get[0],get[1],get[2],get[3] );
         messenger_dealer();
         now_state=Header;
       }else{
@@ -179,7 +179,7 @@ void messenger_dealer(){//訊息交換機MCU
   if(get[3]>=21 && get[3]<=28){// 切入控制mode 播放連續動作
     action_num=get[3]-20;//動作編號
     mode=1;// 切入控制mode
-    printf("mode=1!!!\n" );
+    // printf("mode=1!!!\n" );
   }else{
     if((get[0]|get[1]|get[2])!=0 ){//前兩byte資料為 伺服機設定角度
       while ((angle_FIFO.index_start+1)%10 == angle_FIFO.index_end) {
@@ -193,7 +193,7 @@ void messenger_dealer(){//訊息交換機MCU
     }
     command=get[3];
     mode=0;
-    printf("mode=0!!!\n" );
+    // printf("mode=0!!!\n" );
   }
 }
 // SDC~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -513,7 +513,8 @@ void command_processor(uint8_t *c){//監控命令處理器
 
         uint16_t Good[17]={7500,8600,9500,4700,7300,7500,9000,8300,7500,6400,5500,0,7700,7500,6000,6700,7500};
         for(int i=0;i<17;i++) now[i]=Good[i];
-        PutIn(Good);
+        char check=1;
+        while(check) check=PutIn(Good);
         printf("DONE___The Best Position___\n" );
       }
       *c =0;
@@ -525,13 +526,14 @@ void robot_gesture_player(){//機器人姿態播放器
     uint16_t tmp[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     while(angle_FIFO.index_end != angle_FIFO.index_start){//一直處理直到FIFO變成空的
       angle_FIFO.index_end = (angle_FIFO.index_end+1)%10;
-      // printf("index_end = %d\n", angle_FIFO.index_end);
       for(int i=0;i<17;i++) tmp[i]=now[i];
       uint8_t ID=angle_FIFO.container[0][angle_FIFO.index_end];
       uint16_t a=angle_FIFO.container[1][angle_FIFO.index_end];
-      printf("ID=%d to angle=%d\n",ID,a );
-      tmp[ID]=a;
-      PutIn(tmp);
+      if(tmp[ID]!=a){
+        tmp[ID]=a;
+        char check=1;
+        while(check) check=PutIn(tmp);
+      }
     }
 
   }
