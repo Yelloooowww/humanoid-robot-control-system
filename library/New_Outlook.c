@@ -60,18 +60,19 @@ char PutIn(uint16_t *p){
 	  //   return 1;
 		// }
 		SDC_FIFO_rear=((SDC_FIFO_rear-1)+SDC_FIFO_max)%10;
+    printf("FIFO Is FULL\n" );
     return 1;
   }
 	else
 	{
-    printf("put in\n" );
+    // printf("put in\n" );
     // SDC_FIFO_rear=(SDC_FIFO_rear+1)%SDC_FIFO_max;
     for(int i=0;i<17;i++)
 		{KONDO_SDC_FIFO[SDC_FIFO_rear][i]=*(p+i);
-      printf("*%d ",*(p+i) );
+      // printf("*%d ",*(p+i) );
     }
 		FIFO_flag=1;
-		printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
+		// printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
   }
   return 0;
 }//void PutIn(uint8_t *p)
@@ -80,20 +81,20 @@ char PutIn(uint16_t *p){
 char TakeOut(uint16_t *t){
   if(SDC_FIFO_front == SDC_FIFO_rear)
 	{
-    // printf("FIFO Is Empty\n");
+    printf("FIFO Is Empty\n");
     return 1;
   }
 	else
 	{
 		// if(FIFO_flag==1)
 		// {
-    printf("take out\n" );
+    // printf("take out\n" );
     SDC_FIFO_front=(SDC_FIFO_front+1)%SDC_FIFO_max;
     for(int i=0;i<17;i++)
 		{*(t+i)=KONDO_SDC_FIFO[SDC_FIFO_front][i];
-      printf("^%d ", *(t+i));
+      // printf("^%d ", *(t+i));
     }
-		printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
+		// printf("AfterTake:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
 		return 0;
 		// }
 
@@ -200,8 +201,8 @@ void messenger_dealer(){//訊息交換機MCU
 unsigned int SDC_data[10];
 void KONDO_SDC_read(uint8_t code)
 {
-	printf("start read\n" );
-	printf("KONDO_SDC_read  code=%d\n",code );
+	// printf("start read\n" );
+	// printf("KONDO_SDC_read  code=%d\n",code );
 	char name[4];
   switch (code) {
  	 case 1:sprintf(name,"%.4s","SDC1");break;
@@ -334,7 +335,7 @@ void KONDO_SDC_read(uint8_t code)
 	// Configure to close file mode
   Setting = 0x00;
   check = ASA_SDC00_set(ASA_ID, 200, Mask, Shift, Setting);// 送出旗標組合
-	printf("close the file\n" );
+	// printf("close the file\n" );
 	// for(int j=0 ; j<z ; j++)
 	// printf("SDC_data[%d]=%d\n",j,SDC_data[j] );
 }//KONDO_SDC_read
@@ -573,6 +574,7 @@ void KONDO_transmit(){
     for(int i = 0;i < 17; i++){
       //判斷ID，決定致能左或右
       if(i > 8){  //0~8
+        _delay_ms(1);
         PORTF = 191;
         _delay_ms(1);
         // PORTF = 127;
@@ -583,6 +585,7 @@ void KONDO_transmit(){
         while ( !( UCSR1A & (1<<UDRE1)) );  //If UDREn is one, the buffer is empty
         UDR1 = Take[i]&127;
       }else{
+        _delay_ms(1);
         PORTF = 127;
         _delay_ms(1);
         // PORTF = 191;  //9~16
@@ -626,9 +629,9 @@ void UART1_Init( unsigned int ubrr )
 
 void TIMER2_INIT(){  //計時中斷設定
   TCCR2|=(1<<WGM21);  //CTC Mode
-	TCCR2|=(1<<CS21)|(1<<CS20); //clkI/O/64 (From prescaler)
+	TCCR2|=(1<<CS22)|(1<<CS20); //clkI/O/1024(From prescaler)
 	TIMSK|=(1<<OCIE2);
-	OCR2=171;
+	OCR2=255;
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -659,7 +662,7 @@ ISR(USART0_RX_vect) {
 }
 ISR(TIMER2_COMP_vect){
   clock++;
-  if(clock>=1000){
+  if(clock>=50){
     KONDO_transmit();
     clock=0;
   }
