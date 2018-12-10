@@ -98,7 +98,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ser.open()
             time.sleep(5)
         else:
-            self.accept()
+            self.exec_()
 
     def what_is_type(self,data):   #幫通訊封包定義的type
         return 1
@@ -122,14 +122,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def total_table_set(self):  #總表設定
-        self.tableWidget.setHorizontalHeaderLabels(['定格1','定格2','定格3','定格4','定格5','定格6','定格7','定格8','定格9','定格10'])
+        # self.tableWidget.setHorizontalHeaderLabels(['定格1','定格2','定格3','定格4','定格5','定格6','定格7','定格8','定格9','定格10'])
         self.tableWidget.setVerticalHeaderLabels(['ID_0','ID_1','ID_2','ID_3','ID_4','ID_5','ID_6','ID_7','ID_8','ID_9','ID_10','ID_11','ID_12','ID_13','ID_14','ID_15','ID_16','間格'])
         self.tableWidget.resizeColumnsToContents()  #調整格子寬度 與顯示內容配合
         self.tableWidget.resizeRowsToContents()  #調整格子長度 與顯示內容配合
 
     def total_table_update(self):  #總表更新
         self.lcdNumber.display(self.num_of_active) #LCD顯示值更新
-        for x in range(180):
+        for x in range(1800):
             if x < len(self.accumulate_angle_data):
                 itemmm=QTableWidgetItem(str(self.accumulate_angle_data[x]))
                 itemmm.setTextAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
@@ -256,7 +256,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_16.setValue(7500)
 
     def note_now_angle(self):  #更新accumulate_angle_data
-        if self.num_of_active >=10:
+        if self.num_of_active >=100:
             QMessageBox.about(self,"Too long","動作串長度不可以超過10個")
         else:
             if self.num_of_active ==0:
@@ -270,7 +270,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.num_of_active +=1
                     self.total_table_update()  #更新總表
 
-            elif self.num_of_active <10 and self.num_of_active>0:
+            elif self.num_of_active <100 and self.num_of_active>0:
                 items=("1","2","3","4","5","6","7","8","9","10")
                 item,ok=QInputDialog.getItem(self,"紀錄姿態","與前一姿態間格數",items,0,False)
                 if ok:
@@ -311,7 +311,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             sheet['A19'] = '間格'
             for i in range(17):
                 sheet.cell(row=i+2,column=1,value='ID %d'%i)
-            for j in range(18):
+            for j in range(100):
                 sheet.cell(row=1,column=j+2,value='定格 %d'%(j+1))
             self.accumulate_angle_data +=['#']
             for i in range(18):

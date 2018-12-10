@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -331,7 +331,7 @@
            <bool>false</bool>
           </property>
           <property name="minimum">
-           <number>7500</number>
+           <number>7000</number>
           </property>
           <property name="maximum">
            <number>8300</number>
@@ -344,7 +344,7 @@
         <item>
          <widget class="QSpinBox" name="spinBox_12">
           <property name="minimum">
-           <number>7500</number>
+           <number>7000</number>
           </property>
           <property name="maximum">
            <number>8300</number>
@@ -874,7 +874,7 @@
            <number>6700</number>
           </property>
           <property name="maximum">
-           <number>7500</number>
+           <number>8000</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -887,7 +887,7 @@
            <number>6700</number>
           </property>
           <property name="maximum">
-           <number>7500</number>
+           <number>8000</number>
           </property>
          </widget>
         </item>
@@ -1034,6 +1034,9 @@
         <height>511</height>
        </rect>
       </property>
+      <property name="sizeAdjustPolicy">
+       <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
+      </property>
       <property name="autoScroll">
        <bool>true</bool>
       </property>
@@ -1044,7 +1047,7 @@
        <number>18</number>
       </property>
       <property name="columnCount">
-       <number>10</number>
+       <number>100</number>
       </property>
       <row/>
       <row/>
@@ -1064,6 +1067,96 @@
       <row/>
       <row/>
       <row/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
+      <column/>
       <column/>
       <column/>
       <column/>
