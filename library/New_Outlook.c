@@ -1,11 +1,3 @@
-// 1208測試
-// 人機角度精度3500~11500
-// 內插間格1~10
-// 最佳位置勉強可以用
-// 可以播放10筆以上資料
-// 資料寫入SD卡有一點點機率會失敗QQ
-// 有些軸還是會亂動 有可能因為電池快沒電了
-
 #include "ASA_Lib.h"
 #include <avr/interrupt.h>
 #include <math.h>
@@ -49,19 +41,22 @@ uint16_t KONDO_SDC_FIFO[10][17];//姿態FIFO
 unsigned char FIFO_flag;//for FIFO
 char PutIn(uint16_t *p){
 	SDC_FIFO_rear=(SDC_FIFO_rear+1) % SDC_FIFO_max; //第一次進來，SDC_FIFO_rear=0;第二次進來，SDC_FIFO_rear=1....
-  if(SDC_FIFO_front == SDC_FIFO_rear)
+	if(SDC_FIFO_front == SDC_FIFO_rear)
 	{
-    // if(SDC_FIFO_rear == 0)
-		// {SDC_FIFO_rear=SDC_FIFO_max-1;}
-		// else
-		// {
-		// 	SDC_FIFO_rear=SDC_FIFO_rear-1;
-		// 	printf("FIFO Is FULL\n" );
-	  //   return 1;
-		// }
-		SDC_FIFO_rear=((SDC_FIFO_rear-1)+SDC_FIFO_max)%10;
-    printf("FIFO Is FULL\n" );
-    return 1;
+    if(SDC_FIFO_rear == 0)
+		{
+			SDC_FIFO_rear=SDC_FIFO_max-1;
+			// return 0;
+		}
+		else
+		{
+			SDC_FIFO_rear=SDC_FIFO_rear-1;
+			// printf("FIFO Is FULL\n" );
+	    // return 0;
+		}
+		return 1;
+
+
   }
 	else
 	{
@@ -72,9 +67,10 @@ char PutIn(uint16_t *p){
       // printf("*%d ",*(p+i) );
     }
 		FIFO_flag=1;
+		return 0;
 		// printf("AfterPut:SDC_FIFO_rear=%d SDC_FIFO_front=%d\n", SDC_FIFO_rear,SDC_FIFO_front);
   }
-  return 0;
+
 }//void PutIn(uint8_t *p)
 
 
@@ -662,7 +658,7 @@ ISR(USART0_RX_vect) {
 }
 ISR(TIMER2_COMP_vect){
   clock++;
-  if(clock>=50){
+  if(clock>=14){
     KONDO_transmit();
     clock=0;
   }
