@@ -80,8 +80,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.monitor_win=Monitor()
         self.monitor_win.WantToPrint.connect(self.mmmmonitor)
         self.monitor_win.start()
-        self.spinBox_11.setEnabled(False) #紅色4號殘障了QQ
-        self.horizontalSlider_11.setEnabled(False) #紅色4號殘障了QQ
 
     def mmmmonitor(self,value): #印出M128端printf的東西 & 接收ACK
         for x in value:
@@ -166,7 +164,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.spinBox_8.valueChanged['int'].connect(self.ID_8)
         self.spinBox_9.valueChanged['int'].connect(self.ID_9)
         self.spinBox_10.valueChanged['int'].connect(self.ID_10)
-        # self.spinBox_11.valueChanged['int'].connect(self.ID_11)  #紅色4號殘障了QQ
+        self.spinBox_11.valueChanged['int'].connect(self.ID_11)  #紅色4號殘障了QQ
         self.spinBox_12.valueChanged['int'].connect(self.ID_12)
         self.spinBox_13.valueChanged['int'].connect(self.ID_13)
         self.spinBox_14.valueChanged['int'].connect(self.ID_14)
@@ -213,9 +211,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def ID_10(self):
         self.encoder_and_send_pac([10,self.spinBox_10.value()>>8,self.spinBox_10.value()&255,0])
         self.now_angle_data[10]=self.spinBox_10.value()
-    # def ID_11(self):     #紅色4號殘障了QQ
-    #     self.encoder_and_send_pac([11,self.spinBox_11.value()>>8,self.spinBox_11.value()&255,0])
-    #     self.now_angle_data[11]=self.spinBox_11.value()
+    def ID_11(self):     #紅色4號殘障了QQ
+        self.encoder_and_send_pac([11,self.spinBox_11.value()>>8,self.spinBox_11.value()&255,0])
+        self.now_angle_data[11]=self.spinBox_11.value()
     def ID_12(self):
         self.encoder_and_send_pac([12,self.spinBox_12.value()>>8,self.spinBox_12.value()&255,0])
         self.now_angle_data[12]=self.spinBox_12.value()
@@ -234,26 +232,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def to_the_best_position(self):  #強迫轉到最佳位置
-        self.now_angle_data=[7500,8600,9500,4700,7300,7500,9000,8300,7500,6400,5500,0,7700,7500,6000,6700,7500]
+        self.now_angle_data=[7500,8600,9500,4700,7400,7300,9000,8300,7300,6400,5500,10300,7600,7700,6000,6700,7700]
         data=[0,0,0,31]
         self.encoder_and_send_pac(data)
         self.spinBox.setValue(7500)
         self.spinBox_1.setValue(8600)
         self.spinBox_2.setValue(9500)
         self.spinBox_3.setValue(4700)
-        self.spinBox_4.setValue(7300)
-        self.spinBox_5.setValue(7500)
+        self.spinBox_4.setValue(7400)
+        self.spinBox_5.setValue(7300)
         self.spinBox_6.setValue(9000)
         self.spinBox_7.setValue(8300)
-        self.spinBox_8.setValue(7500)
+        self.spinBox_8.setValue(7300)
         self.spinBox_9.setValue(6400)
         self.spinBox_10.setValue(5500)
-        # self.spinBox_11.setValue(10300)    #紅色4號殘障了QQ
-        self.spinBox_12.setValue(7700)
-        self.spinBox_13.setValue(7500)
+        self.spinBox_11.setValue(10300)    #紅色4號殘障了QQ
+        self.spinBox_12.setValue(7600)
+        self.spinBox_13.setValue(7700)
         self.spinBox_14.setValue(6000)
         self.spinBox_15.setValue(6700)
-        self.spinBox_16.setValue(7500)
+        self.spinBox_16.setValue(7700)
 
     def note_now_angle(self):  #更新accumulate_angle_data
         if self.num_of_active >=100:
@@ -271,7 +269,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.total_table_update()  #更新總表
 
             elif self.num_of_active <100 and self.num_of_active>0:
-                items=("1","2","3","4","5","6","7","8","9","10")
+                items=("1","2","3","4","5","6","7","8","9","10","20","30","40","50","60","70","80","90","100")
                 item,ok=QInputDialog.getItem(self,"紀錄姿態","與前一姿態間格數",items,0,False)
                 if ok:
                     self.accumulate_angle_data += [int(item)]

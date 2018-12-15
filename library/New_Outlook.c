@@ -494,7 +494,7 @@ void command_processor(uint8_t *c){//監控命令處理器
         KONDO_SDC_write( *c -10);
         printf("OpenFileDone_________KONDO_SDC_write_______\n");
       }
-      if( *c<=10 && *c>=1){
+      if((*c<=10 && *c>=1)||((*c%10) ==0)){
         printf("Record with Grid=%d_________\n", *c );
         KONDO_SDC_write( *c );
         printf("Done__KONDO_SDC_write_______\n");
@@ -508,7 +508,7 @@ void command_processor(uint8_t *c){//監控命令處理器
       if( *c ==31){
         printf("The Best Position\n" );
 
-        uint16_t Good[17]={7500,8600,9500,4700,7300,7500,9000,8300,7500,6400,5500,0,7700,7500,6000,6700,7500};
+        uint16_t Good[17]={7500,8600,9500,4700,7400,7300,9000,8300,7300,6400,5500,10300,7600,7700,6000,6700,7700};
         for(int i=0;i<17;i++) now[i]=Good[i];
         char check=1;
         while(check) check=PutIn(Good);
