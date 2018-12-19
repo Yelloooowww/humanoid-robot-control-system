@@ -658,7 +658,7 @@ ISR(USART0_RX_vect) {
 }
 ISR(TIMER2_COMP_vect){
   clock++;
-  if(clock>=8){
+  if(clock>=4){
     KONDO_transmit();
     clock=0;
   }
