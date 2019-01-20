@@ -4,6 +4,7 @@ import PyInstaller.__main__
 from shutil import copyfile
 
 opts = [
+
     # NOTE '-F' maybe not stable in some environment, need more test.
     '-F',
 
@@ -12,7 +13,7 @@ opts = [
 
     # NOTE if ypu want to extra debug info, use the '--debug'.
     # 沒啥用，但可以試試看
-    # '--debug',
+    '--debug',
 
 
     # NOTE you need to change the libs path.
@@ -21,10 +22,7 @@ opts = [
     '--paths=C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\Lib\\site-packages\\PyQt5\\Qt\\bin',
     '--paths=C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\Lib\\site-packages\\PyQt5\\Qt\\plugins',
     '--paths=C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-32bit',
-    # '--paths=C:\\Users\\Lite\\AppData\\Roaming\\pyinstaller\\bincache00_py36_32bit',
     '--paths=C:\\Users\\user\\AppData\\Roaming\\pyinstaller\\bincache00_py36_64bit',
-    # '--paths=C:\\Program Files (x86)\\Windows Kits\\10\\Redist\\ucrt\\DLLs\\x86',
-    # '--paths=C:\\Program Files (x86)\\Windows Kits\\10\\Redist\\ucrt\\DLLs\\x64',
     '--paths=C:\\Program Files (x86)\\Windows Kits\\10\\Redist\\10.0.17763.0\\ucrt\\DLLs\\x64',
     '--paths=C:\\Program Files (x86)\\Windows Kits\\10\\Redist\\10.0.17763.0\\ucrt\\DLLs\\x86',
 
@@ -35,6 +33,7 @@ opts = [
     # '--hidden-import=scipy._lib.messagestream',
 
     # add icon if you want
+    # '--icon','resources/icon.ico'
     # '--icon', 'rxx.ico',
 
     # NOTE not use UPX even if it is available (works differently between Windows and *nix)
@@ -46,8 +45,9 @@ opts = [
 
     # NOTE your application entry file
     'pyqtapp/__main__.py'
+
+
 ]
 
 if __name__ == '__main__':
     PyInstaller.__main__.run(opts)
-    

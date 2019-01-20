@@ -12,7 +12,7 @@ from pyqtapp.ui_waiting_dialog import Waiting_Ui_Dialog
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from .listports import *
+from pyqtapp.listports import *
 from pyqtapp import images_rc
 
 
